@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-// 自动识别系统环境变量中的代理 (如 https_proxy / http_proxy)
 if (
     (process.env.https_proxy || process.env.http_proxy) &&
     !process.execArgv.includes('--use-env-proxy')
