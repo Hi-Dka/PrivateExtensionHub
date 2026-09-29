@@ -26,6 +26,12 @@ const esbuildProblemMatcherPlugin = {
 const fs = require('fs');
 const path = require('path');
 
+/** Webview bundles: rendered in the sandboxed browser context of each webview. */
+const WEBVIEW_ENTRIES = [
+	{ entryPoint: 'src/webview/sidebar/main.tsx', outfile: 'media/sidebar.js' },
+	{ entryPoint: 'src/webview/detail/main.tsx', outfile: 'media/detail.js' },
+];
+
 function copyCodicons() {
 	const srcDir = path.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist');
 	const destDir = path.join(__dirname, 'media', 'codicons');
@@ -44,7 +50,9 @@ function copyCodicons() {
 
 async function main() {
 	copyCodicons();
-	const ctx = await esbuild.context({
+	const contexts = [];
+
+	contexts.push(await esbuild.context({
 		entryPoints: [
 			'src/extension.ts'
 		],
@@ -61,12 +69,33 @@ async function main() {
 			/* add to the end of plugins array */
 			esbuildProblemMatcherPlugin,
 		],
-	});
+	}));
+
+	for (const { entryPoint, outfile } of WEBVIEW_ENTRIES) {
+		contexts.push(await esbuild.context({
+			entryPoints: [entryPoint],
+			bundle: true,
+			format: 'iife',
+			platform: 'browser',
+			target: ['chrome120'],
+			jsx: 'automatic',
+			jsxImportSource: 'preact',
+			minify: production,
+			sourcemap: !production,
+			sourcesContent: false,
+			outfile,
+			logLevel: 'silent',
+			plugins: [
+				esbuildProblemMatcherPlugin,
+			],
+		}));
+	}
+
 	if (watch) {
-		await ctx.watch();
+		await Promise.all(contexts.map((ctx) => ctx.watch()));
 	} else {
-		await ctx.rebuild();
-		await ctx.dispose();
+		await Promise.all(contexts.map((ctx) => ctx.rebuild()));
+		await Promise.all(contexts.map((ctx) => ctx.dispose()));
 	}
 }
 

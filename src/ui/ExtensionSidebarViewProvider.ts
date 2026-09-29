@@ -3,41 +3,20 @@ import { ExtensionInfo } from '../models/index';
 import { ExtensionManager } from '../extension/ExtensionManager';
 import { ExtensionRepository } from '../repository/ExtensionRepository';
 import { ExtensionDetailPanel } from './ExtensionDetailPanel';
-import {
-    computeRowPatch,
-    getSidebarEmptyMessage,
-    getSidebarViewHtml,
-    renderSidebarRows,
-    SidebarExtensionItem,
-    SidebarRow,
-    SidebarViewData,
-} from './sidebarViewHtml';
+import { getSidebarViewHtml, SidebarShellData } from './sidebarViewHtml';
+import type { SidebarItem, SidebarState, SidebarWebviewMessage } from '../webview/types';
 import { MEDIA_DIR } from './webviewAssets';
+
+export type { SidebarWebviewMessage };
+
+/** @deprecated alias kept for existing imports; use `SidebarItem`. */
+export type SidebarExtensionItem = SidebarItem;
 
 let vscodeModule: typeof vscode | null = null;
 try {
     vscodeModule = require('vscode');
 } catch {
     vscodeModule = null;
-}
-
-export interface SidebarWebviewMessage {
-    command:
-        | 'search'
-        | 'clearSearch'
-        | 'openDetail'
-        | 'install'
-        | 'uninstall'
-        | 'update'
-        | 'manage'
-        | 'installAnotherVersion'
-        | 'downloadVsix'
-        | 'copy'
-        | 'ready';
-    query?: string;
-    id?: string;
-    version?: string;
-    text?: string;
 }
 
 export class ExtensionSidebarViewProvider implements vscode.WebviewViewProvider {
@@ -56,8 +35,6 @@ export class ExtensionSidebarViewProvider implements vscode.WebviewViewProvider 
     private searchTimer: NodeJS.Timeout | null = null;
     private searchRequestId = 0;
     private initialized = false;
-    private renderedRows: SidebarRow[] = [];
-    private renderedEmptyMessage: string | null = null;
 
     constructor(
         private readonly extensionUri: vscode.Uri | undefined,
@@ -75,8 +52,6 @@ export class ExtensionSidebarViewProvider implements vscode.WebviewViewProvider 
     ): void {
         this.view = webviewView;
         this.initialized = false;
-        this.renderedRows = [];
-        this.renderedEmptyMessage = null;
 
         const mediaUri = this.extensionUri && vscodeModule
             ? vscodeModule.Uri.joinPath(this.extensionUri, MEDIA_DIR)
@@ -496,107 +471,66 @@ export class ExtensionSidebarViewProvider implements vscode.WebviewViewProvider 
     }
 
     /**
-     * 初始渲染完整文档；之后的更新以增量 patch 消息发送，保留滚动/焦点/输入。
+     * 初始渲染外壳（内嵌初始状态）；之后的更新只发送状态消息。
+     * 渲染与状态同步由 webview 内的 Preact 组件负责。
      */
     updateViewHtml(): void {
         if (!this.view) {
             return;
         }
+        const state = this.buildState();
+
         if (!this.initialized) {
-            this.renderFullDocument();
+            const data: SidebarShellData = {
+                state,
+                cspSource: this.view.webview.cspSource,
+                codiconsUri: this.mediaUri('codicons', 'codicon.css'),
+                nativeBaseCssUri: this.mediaUri('native-base.css'),
+                sidebarCssUri: this.mediaUri('sidebar.css'),
+                sidebarJsUri: this.mediaUri('sidebar.js'),
+            };
+            this.view.webview.html = getSidebarViewHtml(data);
             this.initialized = true;
             return;
         }
-        this.sendPatch();
+
+        this.view.webview.postMessage({ type: 'sidebar:state', state });
     }
 
-    private buildViewData(): SidebarViewData {
-        let codiconsUri: string | undefined;
-        let sidebarCssUri: string | undefined;
-        let nativeBaseCssUri: string | undefined;
-        if (this.view && this.extensionUri && vscodeModule) {
-            codiconsUri = this.view.webview
-                .asWebviewUri(
-                    vscodeModule.Uri.joinPath(
-                        this.extensionUri,
-                        MEDIA_DIR,
-                        'codicons',
-                        'codicon.css',
-                    ),
-                )
-                .toString();
-            nativeBaseCssUri = this.view.webview
-                .asWebviewUri(
-                    vscodeModule.Uri.joinPath(this.extensionUri, MEDIA_DIR, 'native-base.css'),
-                )
-                .toString();
-            sidebarCssUri = this.view.webview
-                .asWebviewUri(
-                    vscodeModule.Uri.joinPath(this.extensionUri, MEDIA_DIR, 'sidebar.css'),
-                )
-                .toString();
-        }
-
+    private buildState(): SidebarState {
+        const items = this.isSearching ? this.searchResults : this.cachedInstalled;
+        const emptyMessage =
+            this.isLoading && items.length === 0
+                ? null
+                : items.length === 0
+                  ? 'No extensions found.'
+                  : null;
         return {
-            searchQuery: this.searchQuery,
-            isSearching: this.isSearching,
             isLoading: this.isLoading,
-            searchResults: this.searchResults,
-            updates: this.cachedUpdates,
-            installed: this.cachedInstalled,
-            cspSource: this.view?.webview.cspSource,
-            codiconsUri,
-            nativeBaseCssUri,
-            sidebarCssUri,
+            isSearching: this.isSearching,
+            query: this.searchQuery,
+            items,
+            emptyMessage,
         };
     }
 
-    private renderFullDocument(): void {
-        const data = this.buildViewData();
-        if (!this.view) {
-            return;
+    private mediaUri(...segments: string[]): string | undefined {
+        if (!this.view || !this.extensionUri || !vscodeModule) {
+            return undefined;
         }
-        this.view.webview.html = getSidebarViewHtml(data);
-        this.renderedRows = renderSidebarRows(data);
-        this.renderedEmptyMessage = getSidebarEmptyMessage(data);
-    }
-
-    private sendPatch(): void {
-        if (!this.view) {
-            return;
-        }
-        const data = this.buildViewData();
-        const nextRows = renderSidebarRows(data);
-        const nextEmptyMessage = getSidebarEmptyMessage(data);
-        const ops = computeRowPatch(this.renderedRows, nextRows);
-        this.renderedRows = nextRows;
-
-        if (ops.length === 0 && nextEmptyMessage === this.renderedEmptyMessage) {
-            return;
-        }
-        this.renderedEmptyMessage = nextEmptyMessage;
-        this.view.webview.postMessage({
-            type: 'sidebarPatch',
-            ops,
-            emptyMessage: nextEmptyMessage,
-        });
+        return this.view.webview
+            .asWebviewUri(vscodeModule.Uri.joinPath(this.extensionUri, MEDIA_DIR, ...segments))
+            .toString();
     }
 
     /**
-     * Webview 文档加载完成后握手：发送完整行状态（重载后恢复内容）。
+     * Webview 文档加载完成后握手：发送当前状态（重载后恢复内容）。
      */
     private handleWebviewReady(): void {
         if (!this.view) {
             return;
         }
-        const data = this.buildViewData();
-        this.renderedRows = renderSidebarRows(data);
-        this.renderedEmptyMessage = getSidebarEmptyMessage(data);
-        this.view.webview.postMessage({
-            type: 'sidebarReset',
-            rows: this.renderedRows,
-            emptyMessage: this.renderedEmptyMessage,
-        });
+        this.view.webview.postMessage({ type: 'sidebar:state', state: this.buildState() });
     }
 
     /**

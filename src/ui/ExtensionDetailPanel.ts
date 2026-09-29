@@ -2,7 +2,8 @@ import type * as vscode from 'vscode';
 import { ExtensionInfo } from '../models/index';
 import { ExtensionManager } from '../extension/ExtensionManager';
 import { ExtensionRepository } from '../repository/ExtensionRepository';
-import { getDetailViewHtml, getDetailPatch, DetailViewData } from './detailViewHtml';
+import { getDetailViewHtml, buildDetailState, DetailShellData, DetailViewData } from './detailViewHtml';
+import type { DetailState } from '../webview/types';
 import { MEDIA_DIR } from './webviewAssets';
 
 let vscodeModule: typeof vscode | null = null;
@@ -44,7 +45,7 @@ export class ExtensionDetailPanel {
     private static readonly panels = new Map<string, ExtensionDetailPanel>();
 
     private htmlInitialized = false;
-    private lastViewData?: DetailViewData;
+    private lastState?: DetailState;
 
     constructor(
         public readonly panel: vscode.WebviewPanel,
@@ -184,10 +185,10 @@ export class ExtensionDetailPanel {
                     return;
                 }
                 case 'ready': {
-                    if (this.htmlInitialized && this.lastViewData) {
+                    if (this.htmlInitialized && this.lastState) {
                         this.panel.webview.postMessage({
-                            type: 'detailPatch',
-                            patch: getDetailPatch(this.lastViewData),
+                            type: 'detail:state',
+                            state: this.lastState,
                         });
                     }
                     return;
@@ -276,6 +277,7 @@ export class ExtensionDetailPanel {
         let nativeBaseCssUri: string | undefined;
         let detailCssUri: string | undefined;
         let markdownCssUri: string | undefined;
+        let detailJsUri: string | undefined;
 
         if (this.extensionUri && vscodeModule) {
             codiconsUri = this.panel.webview
@@ -303,6 +305,9 @@ export class ExtensionDetailPanel {
                     vscodeModule.Uri.joinPath(this.extensionUri, MEDIA_DIR, 'markdown.css'),
                 )
                 .toString();
+            detailJsUri = this.panel.webview
+                .asWebviewUri(vscodeModule.Uri.joinPath(this.extensionUri, MEDIA_DIR, 'detail.js'))
+                .toString();
         }
 
         const registryUrl = vscodeModule?.workspace?.getConfiguration
@@ -320,27 +325,29 @@ export class ExtensionDetailPanel {
             installedVersion,
             hasUpdate,
             latestVersion,
-            cspSource: this.panel.webview.cspSource,
-            nonce: this.htmlInitialized ? undefined : getNonce(),
-            codiconsUri,
-            nativeBaseCssUri,
-            detailCssUri,
-            markdownCssUri,
             registryUrl,
         };
-        this.lastViewData = viewData;
+        const state = buildDetailState(viewData);
+        this.lastState = state;
 
         if (!this.htmlInitialized) {
-            this.panel.webview.html = getDetailViewHtml(viewData);
+            const shellData: DetailShellData = {
+                state,
+                cspSource: this.panel.webview.cspSource,
+                nonce: getNonce(),
+                codiconsUri,
+                nativeBaseCssUri,
+                detailCssUri,
+                markdownCssUri,
+                detailJsUri,
+            };
+            this.panel.webview.html = getDetailViewHtml(shellData);
             this.htmlInitialized = true;
             return;
         }
 
-        // 初始渲染之后使用增量 patch，保留激活 Tab 与滚动位置
-        this.panel.webview.postMessage({
-            type: 'detailPatch',
-            patch: getDetailPatch(viewData),
-        });
+        // 初始渲染之后只发送状态；渲染与 Tab 状态由 webview 组件保持
+        this.panel.webview.postMessage({ type: 'detail:state', state });
     }
 
     /**
