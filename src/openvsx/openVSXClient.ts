@@ -1,4 +1,5 @@
 import { OpenVSXExtension, OpenVSXSearchResult } from './models/index';
+import { ExtensionManifest } from '../models/index';
 
 export interface ILogger {
     debug(message: string, ...args: any[]): void;
@@ -165,6 +166,106 @@ export class OpenVSXClient {
             `[OpenVSX] README 获取成功，共 ${text.length} 字符 (${duration}ms)`,
         );
         return text;
+    }
+
+    /**
+     * 获取 CHANGELOG 更新日志文档
+     */
+    async getChangelog(
+        namespace: string,
+        name: string,
+        version?: string,
+    ): Promise<string | undefined> {
+        this.logger?.info(
+            `[OpenVSX] 正在获取 CHANGELOG: ${namespace}.${name}@${version ?? 'latest'}`,
+        );
+
+        let changelogUrl: string | undefined;
+
+        if (!version) {
+            const extension = await this.getExtension(namespace, name);
+            changelogUrl = extension.files?.changelog;
+        } else {
+            const versionDetail = await this.request<OpenVSXExtension>(
+                `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
+            );
+            changelogUrl = versionDetail.files?.changelog;
+        }
+
+        if (!changelogUrl) {
+            this.logger?.info(
+                `[OpenVSX] CHANGELOG 未提供: ${namespace}.${name}@${version ?? 'latest'}`,
+            );
+            return undefined;
+        }
+
+        const startTime = Date.now();
+        this.logger?.info(`[HTTP] GET CHANGELOG 内容: ${changelogUrl}`);
+        const response = await fetch(changelogUrl);
+        const duration = Date.now() - startTime;
+
+        if (!response.ok) {
+            this.logger?.warn(
+                `[HTTP] CHANGELOG 请求失败: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
+            );
+            return undefined;
+        }
+
+        const text = await response.text();
+        this.logger?.info(
+            `[OpenVSX] CHANGELOG 获取成功，共 ${text.length} 字符 (${duration}ms)`,
+        );
+        return text;
+    }
+
+    /**
+     * 获取扩展清单 (package.json)
+     */
+    async getManifest(
+        namespace: string,
+        name: string,
+        version?: string,
+    ): Promise<ExtensionManifest | undefined> {
+        this.logger?.info(
+            `[OpenVSX] 正在获取 Manifest: ${namespace}.${name}@${version ?? 'latest'}`,
+        );
+
+        let manifestUrl: string | undefined;
+
+        if (!version) {
+            const extension = await this.getExtension(namespace, name);
+            manifestUrl = extension.files?.manifest;
+        } else {
+            const versionDetail = await this.request<OpenVSXExtension>(
+                `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
+            );
+            manifestUrl = versionDetail.files?.manifest;
+        }
+
+        if (!manifestUrl) {
+            this.logger?.info(
+                `[OpenVSX] Manifest 未提供: ${namespace}.${name}@${version ?? 'latest'}`,
+            );
+            return undefined;
+        }
+
+        const startTime = Date.now();
+        this.logger?.info(`[HTTP] GET Manifest 内容: ${manifestUrl}`);
+        const response = await fetch(manifestUrl);
+        const duration = Date.now() - startTime;
+
+        if (!response.ok) {
+            this.logger?.warn(
+                `[HTTP] Manifest 请求失败: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
+            );
+            return undefined;
+        }
+
+        const manifest = (await response.json()) as ExtensionManifest;
+        this.logger?.info(
+            `[OpenVSX] Manifest 获取成功 (${duration}ms)`,
+        );
+        return manifest;
     }
 
     /**

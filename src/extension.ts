@@ -1,6 +1,15 @@
 import * as vscode from 'vscode';
 import { Log } from './common/logger';
 import { OpenVSXClient, OpenVSXError } from './openvsx/openVSXClient';
+import { OpenVSXRepository } from './repository/index';
+import { ExtensionManager } from './extension/index';
+import {
+    ExtensionTreeDataProvider,
+    ExtensionTreeItem,
+    ExtensionDetailPanel,
+    ExtensionSidebarViewProvider,
+} from './ui/index';
+import { ExtensionInfo } from './models/index';
 
 function getClient(): { client: OpenVSXClient; registryUrl: string } {
     const config = vscode.workspace.getConfiguration('privateExtensionHub');
@@ -232,7 +241,210 @@ export function activate(context: vscode.ExtensionContext) {
         },
     );
 
-    context.subscriptions.push(searchDisposable);
+    // 初始化核心服务与 Webview 侧边栏视图
+    const { client } = getClient();
+    const repository = new OpenVSXRepository(client);
+    const extensionManager = new ExtensionManager(repository);
+    const sidebarViewProvider = new ExtensionSidebarViewProvider(
+        context.extensionUri,
+        extensionManager,
+        repository,
+    );
+
+    const sidebarViewDisposable = vscode.window.registerWebviewViewProvider(
+        ExtensionSidebarViewProvider.viewType,
+        sidebarViewProvider,
+    );
+
+    // 保持 TreeDataProvider 兼容性（若有备用需要）
+    const treeDataProvider = new ExtensionTreeDataProvider(
+        extensionManager,
+        repository,
+    );
+
+    // 注册侧边栏相关命令
+    const refreshDisposable = vscode.commands.registerCommand(
+        'hidka.refreshExtensions',
+        async () => {
+            await sidebarViewProvider.refresh();
+            await ExtensionDetailPanel.refreshAll();
+            treeDataProvider.refresh();
+        },
+    );
+
+    const treeSearchDisposable = vscode.commands.registerCommand(
+        'hidka.searchInTreeView',
+        async () => {
+            const query = await vscode.window.showInputBox({
+                prompt: '在扩展仓库中搜索 (例如: python, git, rust)',
+                placeHolder: 'python',
+            });
+            if (query && query.trim()) {
+                await vscode.window.withProgress(
+                    {
+                        location: vscode.ProgressLocation.Notification,
+                        title: `正在搜索 "${query.trim()}"...`,
+                    },
+                    async () => {
+                        try {
+                            await sidebarViewProvider.performSearch(query.trim());
+                        } catch (err) {
+                            handleError(err, '侧边栏搜索');
+                        }
+                    },
+                );
+            }
+        },
+    );
+
+    const installDisposable = vscode.commands.registerCommand(
+        'hidka.installExtension',
+        async (item?: ExtensionTreeItem | ExtensionInfo) => {
+            const ext =
+                item instanceof ExtensionTreeItem ? item.extension : item;
+            if (!ext) {
+                return;
+            }
+            await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: `正在安装 ${ext.displayName || ext.name}...`,
+                },
+                async () => {
+                    try {
+                        await extensionManager.install(
+                            ext.namespace,
+                            ext.name,
+                            ext.version,
+                        );
+                        vscode.window.showInformationMessage(
+                            `扩展 ${ext.displayName || ext.name} 安装完成！`,
+                        );
+                        await sidebarViewProvider.refresh();
+                        await ExtensionDetailPanel.refreshPanel(ext.id);
+                        treeDataProvider.refresh();
+                    } catch (err) {
+                        handleError(err, '扩展安装');
+                    }
+                },
+            );
+        },
+    );
+
+    const uninstallDisposable = vscode.commands.registerCommand(
+        'hidka.uninstallExtension',
+        async (item?: ExtensionTreeItem | ExtensionInfo) => {
+            const ext =
+                item instanceof ExtensionTreeItem ? item.extension : item;
+            if (!ext) {
+                return;
+            }
+            const confirm = await vscode.window.showWarningMessage(
+                `确定要卸载扩展 ${ext.displayName || ext.name} 吗？`,
+                { modal: true },
+                '确定卸载',
+            );
+            if (confirm !== '确定卸载') {
+                return;
+            }
+            await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: `正在卸载 ${ext.displayName || ext.name}...`,
+                },
+                async () => {
+                    try {
+                        await extensionManager.uninstall(ext.id);
+                        vscode.window.showInformationMessage(
+                            `扩展 ${ext.displayName || ext.name} 卸载成功！`,
+                        );
+                        await sidebarViewProvider.refresh();
+                        await ExtensionDetailPanel.refreshPanel(ext.id);
+                        treeDataProvider.refresh();
+                    } catch (err) {
+                        handleError(err, '扩展卸载');
+                    }
+                },
+            );
+        },
+    );
+
+    const updateDisposable = vscode.commands.registerCommand(
+        'hidka.updateExtension',
+        async (
+            item?:
+                | ExtensionTreeItem
+                | { extension: ExtensionInfo; targetVersion?: string },
+        ) => {
+            const ext =
+                item instanceof ExtensionTreeItem
+                    ? item.extension
+                    : (item as any)?.extension;
+            const targetVersion = (item as any)?.targetVersion;
+            if (!ext) {
+                return;
+            }
+            await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: `正在更新 ${ext.displayName || ext.name} 至 v${targetVersion || '最新'}...`,
+                },
+                async () => {
+                    try {
+                        await extensionManager.install(
+                            ext.namespace,
+                            ext.name,
+                            targetVersion,
+                        );
+                        vscode.window.showInformationMessage(
+                            `扩展 ${ext.displayName || ext.name} 更新成功！`,
+                        );
+                        await sidebarViewProvider.refresh();
+                        await ExtensionDetailPanel.refreshPanel(ext.id);
+                        treeDataProvider.refresh();
+                    } catch (err) {
+                        handleError(err, '扩展更新');
+                    }
+                },
+            );
+        },
+    );
+
+    const openDetailDisposable = vscode.commands.registerCommand(
+        'hidka.openExtensionDetail',
+        async (item?: ExtensionTreeItem | ExtensionInfo) => {
+            const ext =
+                item instanceof ExtensionTreeItem ? item.extension : item;
+            if (!ext) {
+                return;
+            }
+            try {
+                await ExtensionDetailPanel.show(
+                    ext,
+                    extensionManager,
+                    repository,
+                    () => {
+                        sidebarViewProvider.refresh();
+                        treeDataProvider.refresh();
+                    },
+                    context.extensionUri,
+                );
+            } catch (err) {
+                handleError(err, '打开扩展详情');
+            }
+        },
+    );
+
+    context.subscriptions.push(
+        sidebarViewDisposable,
+        refreshDisposable,
+        treeSearchDisposable,
+        installDisposable,
+        uninstallDisposable,
+        updateDisposable,
+        openDetailDisposable,
+        searchDisposable,
+    );
 }
 
 export function deactivate() {}

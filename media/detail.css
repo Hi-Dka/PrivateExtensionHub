@@ -1,0 +1,613 @@
+/*---------------------------------------------------------------------------------------------
+ *  Extension editor — values ported from Visual Studio Code 1.139.1 (MIT).
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  See media/THIRD_PARTY_NOTICES.md and docs/native-reference-1.139.1.md.
+ *--------------------------------------------------------------------------------------------*/
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+}
+
+/* -------------------------------------------------------------- container */
+
+.extension-editor {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    max-width: 95%;
+}
+
+.extension-editor .clickable {
+    cursor: pointer;
+}
+
+/* ----------------------------------------------------------------- header */
+
+.extension-editor > .header {
+    display: flex;
+    padding-top: 20px;
+    padding-bottom: 12px;
+    padding-left: 20px;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+.extension-editor > .header > .icon-container {
+    position: relative;
+}
+
+.extension-editor > .header > .icon-container .extension-icon .icon {
+    height: 128px;
+    width: 128px;
+    object-fit: contain;
+}
+
+.extension-editor > .header > .icon-container > .extension-icon .codicon {
+    font-size: 128px !important;
+}
+
+.extension-editor > .header > .details {
+    padding-left: 12px;
+    overflow: hidden;
+    user-select: text;
+    min-width: 0;
+}
+
+.extension-editor > .header > .details > .title {
+    display: flex;
+    align-items: center;
+}
+
+.extension-editor > .header > .details > .title > .name {
+    flex: 0;
+    font-size: 26px;
+    line-height: 30px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.extension-editor > .header > .details > .subtitle {
+    padding-top: 6px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.extension-editor > .header > .details > .subtitle .publisher {
+    display: flex;
+    align-items: center;
+}
+
+.extension-editor > .header > .details > .subtitle .install,
+.extension-editor > .header > .details > .subtitle .rating {
+    display: flex;
+    align-items: center;
+}
+
+.extension-editor > .header > .details > .subtitle .install > .count {
+    margin-left: 6px;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .subtitle
+    > .subtitle-entry:not(:empty):not(.last-non-empty) {
+    border-right: 1px solid rgba(128, 128, 128, 0.7);
+    margin-right: 14px;
+    padding-right: 14px;
+}
+
+.extension-editor > .header > .details > .description {
+    margin-top: 10px;
+}
+
+.extension-editor > .header > .details > .actions-status-container {
+    margin-top: 10px;
+    display: flex;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar {
+    text-align: initial;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container {
+    flex-wrap: wrap;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item {
+    margin-right: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item
+    .extension-action {
+    margin-bottom: 2px;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item
+    > .extension-action:not(.icon) {
+    margin-left: 2px;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item
+    > .extension-action,
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item.action-dropdown-item
+    > .monaco-dropdown
+    .extension-action.action-dropdown {
+    line-height: 22px;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item:not(.checkbox-action-item)
+    > .extension-action:not(.icon) {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item.action-dropdown-item,
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item.checkbox-action-item,
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item:not(.action-dropdown-item):not(.checkbox-action-item)
+    > .extension-action {
+    margin-right: 6px;
+}
+
+.extension-editor > .header > .details > .actions-status-container > .status {
+    line-height: 22px;
+    font-size: 90%;
+    margin-top: 3px;
+}
+
+.extension-editor
+    > .header
+    > .details
+    > .actions-status-container
+    > .status
+    .codicon {
+    vertical-align: text-bottom;
+}
+
+/* ------------------------------------------------------------------- body */
+
+.extension-editor > .body {
+    flex: 1;
+    overflow: hidden;
+}
+
+.extension-editor > .body > .navbar {
+    height: 36px;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 36px;
+    padding-left: 20px;
+    border-bottom: 1px solid var(--vscode-panelSection-border);
+    box-sizing: border-box;
+}
+
+.extension-editor > .body > .navbar > .monaco-action-bar {
+    height: 100%;
+}
+
+.extension-editor > .body > .navbar > .monaco-action-bar > .actions-container {
+    justify-content: initial;
+}
+
+.extension-editor > .body > .navbar > .monaco-action-bar > .actions-container > .action-item {
+    height: 100%;
+}
+
+.extension-editor
+    > .body
+    > .navbar
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item
+    > .action-label {
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--vscode-panelTitle-inactiveForeground);
+    text-transform: uppercase;
+    background: none !important;
+    border-radius: 0 !important;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.extension-editor
+    > .body
+    > .navbar
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item
+    > .action-label.checked {
+    border-bottom: 1px solid var(--vscode-panelTitle-activeBorder);
+    color: var(--vscode-panelTitle-activeForeground);
+}
+
+.extension-editor
+    > .body
+    > .navbar
+    > .monaco-action-bar
+    > .actions-container
+    > .action-item
+    > .action-label:hover {
+    color: var(--vscode-panelTitle-activeForeground);
+}
+
+.extension-editor > .body > .content {
+    height: calc(100% - 37px);
+    position: relative;
+    overflow: hidden;
+    user-select: text;
+}
+
+.extension-editor > .body > .content .tab-pane {
+    display: none;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.extension-editor > .body > .content .tab-pane.active {
+    display: block;
+}
+
+/* Non-markdown tab content uses the reference .subcontent padding. */
+.subcontent {
+    height: 100%;
+    padding: 20px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* ------------------------------------------------------ details two-column */
+
+.details-layout {
+    display: flex;
+    height: 100%;
+}
+
+.details-layout > .readme-container {
+    flex: 1;
+    min-width: 0;
+    margin: 0 auto;
+    max-width: 75%;
+}
+
+.details-layout > .additional-details-container {
+    width: 25%;
+    min-width: 175px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+@media (max-width: 499px) {
+    .details-layout > .readme-container {
+        max-width: 100%;
+    }
+
+    .details-layout > .additional-details-container {
+        display: none;
+    }
+}
+
+/* ------------------------------------------------------- additional details */
+
+.additional-details-container > .additional-details-content {
+    height: 100%;
+    overflow-y: auto;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+.additional-details-element:not(:first-child) {
+    padding-top: 16px;
+}
+
+.additional-details-element {
+    padding-bottom: 16px;
+}
+
+.additional-details-element:not(:last-child) {
+    border-bottom: 1px solid rgba(128, 128, 128, 0.22);
+}
+
+.additional-details-element > .additional-details-title {
+    font-size: 120%;
+    padding-bottom: 12px;
+}
+
+.categories .category {
+    display: inline-block;
+    border: 1px solid rgba(136, 136, 136, 0.45);
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-size: 90%;
+    margin: 0 6px 3px 0;
+}
+
+.resources .resource {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.resources .resource .codicon {
+    color: var(--vscode-descriptionForeground);
+}
+
+.resources .resource a {
+    padding-left: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-decoration: none;
+    color: var(--vscode-textLink-foreground);
+}
+
+.resources .resource:hover a {
+    text-decoration: underline;
+}
+
+.more-info .more-info-entry {
+    font-size: 90%;
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 6px;
+    padding: 2px 4px;
+}
+
+.more-info .more-info-entry:nth-child(odd) {
+    background-color: #8282820a;
+}
+
+.more-info .more-info-entry .more-info-entry-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.more-info .more-info-entry code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.copy-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-icon-btn:hover {
+    color: var(--vscode-editor-foreground);
+}
+
+/* ------------------------------------------------------------ manage menu */
+
+.action-item.action-dropdown-item {
+    position: relative;
+}
+
+.manage-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background-color: var(--vscode-menu-background, #252526);
+    border: 1px solid var(--vscode-menu-border, #454545);
+    box-shadow: var(--vscode-shadow-lg);
+    border-radius: var(--vscode-cornerRadius-medium, 6px);
+    min-width: 170px;
+    z-index: 1000;
+    padding: 4px 0;
+}
+
+.manage-menu.show {
+    display: block;
+}
+
+.manage-menu-item {
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--vscode-menu-foreground, #cccccc);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.manage-menu-item:hover {
+    background-color: var(--vscode-menu-selectionBackground, #04395e);
+    color: var(--vscode-menu-selectionForeground, #ffffff);
+}
+
+/* ------------------------------------------- feature contributions list */
+
+.features-section {
+    margin-bottom: 28px;
+}
+
+.features-header {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--vscode-descriptionForeground, #8c8c8c);
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--vscode-panel-border, #333333);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.features-header .features-count {
+    font-weight: normal;
+    opacity: 0.8;
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--vscode-tree-tableColumnsBorder, rgba(128, 128, 128, 0.15));
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.feature-item:last-child {
+    border-bottom: none;
+}
+
+.feature-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.feature-item-key code {
+    font-family: var(--vscode-editor-font-family, monospace);
+    background-color: var(--vscode-textCodeBlock-background, #2b2b2b);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--vscode-textPreformat-foreground, #d7ba7d);
+}
+
+.feature-item-default {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground, #8c8c8c);
+}
+
+.feature-item-default code,
+.feature-item-keybinding code,
+.feature-item-desc code {
+    font-family: var(--vscode-editor-font-family, monospace);
+    background-color: var(--vscode-textCodeBlock-background, #2b2b2b);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.feature-item-desc {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--vscode-editor-foreground, #cccccc);
+}
+
+/* ----------------------------------------------------------- dependencies */
+
+.dependencies-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dependency-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--vscode-panel-border, #2d2d2d);
+    font-size: 13px;
+}
+
+.dependency-icon {
+    font-size: 16px;
+    color: var(--vscode-textLink-foreground, #3794ff);
+}
+
+.dependency-id {
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-weight: 500;
+    color: var(--vscode-textLink-foreground, #3794ff);
+}

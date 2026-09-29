@@ -15,12 +15,15 @@ export interface OpenVSXExtension {
     repository?: string;
 
     downloadCount?: number;
+    averageRating?: number;
+    reviewCount?: number;
 
     files?: {
         download?: string;
         readme?: string;
         changelog?: string;
         icon?: string;
+        manifest?: string;
     };
 
     allVersions?: Record<string, string>;

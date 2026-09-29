@@ -1,0 +1,388 @@
+/*---------------------------------------------------------------------------------------------
+ *  Extensions viewlet sidebar — values ported from Visual Studio Code 1.139.1 (MIT).
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  See media/THIRD_PARTY_NOTICES.md and docs/native-reference-1.139.1.md.
+ *--------------------------------------------------------------------------------------------*/
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    background-color: var(--vscode-sideBar-background);
+    color: var(--vscode-sideBar-foreground);
+}
+
+.extensions-viewlet {
+    position: relative;
+    height: 100%;
+    user-select: none;
+}
+
+.extensions-viewlet .hidden {
+    display: none !important;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.extensions-viewlet > .header {
+    height: 41px;
+    box-sizing: border-box;
+    padding: 5px 12px 6px 20px;
+}
+
+.extensions-viewlet > .header > .extensions-search-container {
+    position: relative;
+}
+
+.extensions-viewlet > .header .search-box {
+    position: relative;
+    width: 100%;
+    height: 28px;
+    line-height: 18px;
+    box-sizing: border-box;
+    padding: 4px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+}
+
+.extensions-viewlet > .header .search-input {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 0 4px;
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    user-select: text;
+}
+
+.extensions-viewlet > .header .search-input:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+.extensions-viewlet > .header .search-input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--vscode-input-placeholderForeground);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    display: none;
+    line-height: 1;
+    border-radius: 2px;
+}
+
+.search-clear-btn:hover {
+    color: var(--vscode-input-foreground);
+}
+
+/* -------------------------------------------------------------------- list */
+
+.extensions-viewlet > .extensions {
+    height: calc(100% - 41px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.extensions-viewlet > .extensions > .monaco-list {
+    white-space: normal;
+}
+
+.extensions-viewlet > .extensions .monaco-list-row {
+    height: 72px;
+}
+
+.extensions-viewlet > .extensions .extension-list-item {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 0 0 0 var(--vscode-spacing-size160);
+    overflow: hidden;
+    display: flex;
+}
+
+.extensions-viewlet > .extensions .extension-list-item.loading {
+    background: url("./loading.svg") center center no-repeat;
+}
+
+body.vscode-dark .extensions-viewlet > .extensions .extension-list-item.loading {
+    background-image: url("./loading-dark.svg");
+}
+
+body.vscode-high-contrast .extensions-viewlet > .extensions .extension-list-item.loading,
+body.vscode-high-contrast-light .extensions-viewlet > .extensions .extension-list-item.loading {
+    background-image: url("./loading-hc.svg");
+}
+
+.extensions-viewlet > .extensions .extension-list-item.loading > .icon-container {
+    display: none;
+}
+
+/* ------------------------------------------------------------- list items */
+
+.extension-list-item > .icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.extension-icon .icon {
+    width: 36px;
+    height: 36px;
+    margin-right: 16px;
+    border-radius: var(--vscode-cornerRadius-xSmall, 2px);
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.extension-icon .codicon {
+    padding-right: 16px;
+    font-size: 36px !important;
+}
+
+.extension-list-item > .details {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.extension-list-item > .details > .header-container {
+    height: 20px;
+    display: flex;
+    overflow: hidden;
+    padding-right: 10px;
+}
+
+.extension-list-item > .details > .header-container > .header {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+}
+
+.extension-list-item > .details > .header-container > .header > .name {
+    font-weight: var(--vscode-fontWeight-semiBold);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.extension-list-item > .details > .header-container > .header > .activation-status,
+.extension-list-item > .details > .header-container > .header > .install-count,
+.extension-list-item > .details > .header-container > .header > .ratings {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.extension-list-item > .details > .header-container > .header > .install-count:not(:empty) {
+    font-size: 11px;
+    margin: 0 6px 0 auto;
+}
+
+.extension-list-item > .details > .header-container > .header .codicon {
+    margin-right: 2px;
+}
+
+.extension-list-item > .details > .header-container > .header > .ratings {
+    text-align: right;
+}
+
+.extension-list-item > .details > .description {
+    padding-right: 8px;
+    line-height: normal;
+    color: var(--vscode-descriptionForeground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.extension-list-item .ellipsis {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.extension-list-item > .details > .footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 2px;
+    padding-top: 2px;
+    height: 24px;
+    overflow: hidden;
+    align-items: center;
+}
+
+.extension-list-item > .details > .footer > .publisher-container {
+    flex: 1;
+    line-height: 24px;
+    min-width: 0;
+}
+
+.extension-list-item > .details > .footer .publisher {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.extension-list-item > .details > .footer .publisher > .publisher-name {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    font-weight: var(--vscode-fontWeight-semiBold);
+}
+
+/* ---------------------------------------------------------------- actions */
+
+.extension-list-item > .details > .footer > .monaco-action-bar > .actions-container {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+}
+
+.extension-list-item
+    > .details
+    > .footer
+    > .monaco-action-bar
+    > .actions-container
+    .extension-action.label {
+    max-width: 150px;
+    line-height: 16px;
+}
+
+.extension-list-item
+    .monaco-action-bar
+    > .actions-container
+    > .action-item:not(.action-dropdown-item)
+    > .extension-action {
+    margin-left: 6px;
+}
+
+/* ------------------------------------------------------------ empty state */
+
+.extensions-viewlet > .extensions .message-container {
+    padding: 5px 9px 5px 20px;
+    cursor: default;
+    display: flex;
+}
+
+.extensions-viewlet > .extensions .message-container .message {
+    padding-left: 5px;
+    color: var(--vscode-foreground);
+}
+
+/* ------------------------------------------------------------- narrow mode */
+
+@media (max-width: 250px) {
+    .extensions-viewlet > .extensions .extension-list-item > .icon-container {
+        align-items: flex-start;
+        padding-top: 10px;
+    }
+
+    .extensions-viewlet > .extensions .extension-icon .icon {
+        width: 24px;
+        height: 24px;
+        padding-right: 8px;
+    }
+
+    .extensions-viewlet > .extensions .extension-icon .codicon {
+        font-size: 24px !important;
+        padding-right: 8px;
+    }
+}
+
+/* ------------------------------------------- context menu (approximation) */
+
+.monaco-menu-container {
+    position: fixed;
+    z-index: 1000;
+    box-shadow: var(--vscode-shadow-lg);
+    border-radius: var(--vscode-cornerRadius-medium, 6px);
+    padding: 4px 0;
+    background-color: var(--vscode-menu-background, #252526);
+    color: var(--vscode-menu-foreground, #cccccc);
+    border: 1px solid var(--vscode-menu-border, #454545);
+    min-width: 170px;
+    user-select: none;
+}
+
+.monaco-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.monaco-menu .actions-container {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.monaco-menu .action-item {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.monaco-menu .action-item-separator {
+    height: 1px;
+    border-bottom: 1px solid var(--vscode-menu-separatorBackground, #454545);
+    margin: 4px 0;
+    padding: 0;
+}
+
+.monaco-menu .action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 8px;
+    font-size: 12px;
+    color: var(--vscode-menu-foreground, #cccccc);
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 3px;
+    line-height: 16px;
+}
+
+.monaco-menu .action-menu-item:hover {
+    background-color: var(--vscode-menu-selectionBackground, #04395e);
+    color: var(--vscode-menu-selectionForeground, #ffffff);
+}
+
+.monaco-menu .menu-item-icon {
+    font-size: 14px;
+    width: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+}
+
+.monaco-menu .action-label {
+    flex: 1;
+    white-space: nowrap;
+}

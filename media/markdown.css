@@ -1,0 +1,200 @@
+/*---------------------------------------------------------------------------------------------
+ *  Markdown README typography — values ported from the VS Code 1.139.1 built-in
+ *  markdown preview stylesheet (MIT). Copyright (c) Microsoft Corporation.
+ *  See media/THIRD_PARTY_NOTICES.md and docs/native-reference-1.139.1.md.
+ *--------------------------------------------------------------------------------------------*/
+
+.markdown-body {
+    font-family: var(--markdown-font-family, var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif));
+    font-size: var(--markdown-font-size, 14px);
+    line-height: var(--markdown-line-height, 22px);
+    padding: 1em 26px 0;
+    word-wrap: break-word;
+    color: var(--vscode-editor-foreground);
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6,
+.markdown-body p,
+.markdown-body ol,
+.markdown-body ul,
+.markdown-body pre {
+    margin-top: 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 16px;
+    line-height: 1.25;
+}
+
+.markdown-body h1 {
+    font-size: 2em;
+    margin-top: 0;
+    padding-bottom: 0.3em;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}
+
+.markdown-body h2 {
+    font-size: 1.5em;
+    padding-bottom: 0.3em;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+}
+
+.markdown-body h3 {
+    font-size: 1.25em;
+}
+
+.markdown-body h4 {
+    font-size: 1em;
+}
+
+.markdown-body h5 {
+    font-size: 0.875em;
+}
+
+.markdown-body h6 {
+    font-size: 0.85em;
+}
+
+.markdown-body p {
+    margin-bottom: 16px;
+}
+
+.markdown-body li p {
+    margin-bottom: 0.7em;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin-bottom: 0.7em;
+}
+
+.markdown-body ul ul:first-child,
+.markdown-body ul ol:first-child,
+.markdown-body ol ul:first-child,
+.markdown-body ol ol:first-child {
+    margin-bottom: 0;
+}
+
+.markdown-body img,
+.markdown-body video {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.markdown-body a {
+    text-decoration: none;
+    color: var(--vscode-textLink-foreground);
+}
+
+.markdown-body a:hover {
+    text-decoration: underline;
+    color: var(--vscode-textLink-activeForeground);
+}
+
+.markdown-body a:focus,
+.markdown-body input:focus,
+.markdown-body select:focus,
+.markdown-body textarea:focus {
+    outline: 1px solid -webkit-focus-ring-color;
+    outline-offset: -1px;
+}
+
+.markdown-body hr {
+    border: 0;
+    height: 1px;
+    border-bottom: 1px solid;
+}
+
+.markdown-body table {
+    border-collapse: collapse;
+    margin-bottom: 0.7em;
+}
+
+.markdown-body th {
+    text-align: left;
+    border-bottom: 1px solid;
+}
+
+.markdown-body th,
+.markdown-body td {
+    padding: 5px 10px;
+}
+
+.markdown-body table > tbody > tr + tr > td {
+    border-top: 1px solid;
+}
+
+.markdown-body blockquote {
+    margin: 0;
+    padding: 0 16px 0 10px;
+    border-left-width: 5px;
+    border-left-style: solid;
+    border-radius: 2px;
+}
+
+.markdown-body code {
+    font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace);
+    font-size: 1em;
+    line-height: 1.357em;
+}
+
+.markdown-body pre:not(.hljs) {
+    padding: 16px;
+    border-radius: 3px;
+    overflow: auto;
+}
+
+.markdown-body pre {
+    position: relative;
+    background-color: var(--vscode-textCodeBlock-background);
+    border: 1px solid var(--vscode-widget-border);
+}
+
+.markdown-body pre code {
+    display: inline-block;
+    color: var(--vscode-editor-foreground);
+    tab-size: 4;
+    background: none;
+}
+
+/* Theme-dependent borders (native preview styles them per color theme kind). */
+body.vscode-light .markdown-body h1,
+body.vscode-light .markdown-body h2,
+body.vscode-light .markdown-body hr,
+body.vscode-light .markdown-body td {
+    border-color: rgba(0, 0, 0, 0.18);
+}
+
+body.vscode-dark .markdown-body h1,
+body.vscode-dark .markdown-body h2,
+body.vscode-dark .markdown-body hr,
+body.vscode-dark .markdown-body td {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.vscode-light .markdown-body th {
+    border-color: rgba(0, 0, 0, 0.69);
+}
+
+body.vscode-dark .markdown-body th {
+    border-color: rgba(255, 255, 255, 0.69);
+}
+
+.empty-state {
+    padding: 20px;
+    color: var(--vscode-descriptionForeground, #8c8c8c);
+}

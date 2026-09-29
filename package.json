@@ -14,12 +14,68 @@
     ],
     "main": "./dist/extension.js",
     "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "privateExtensionHub",
+                    "title": "Private Extension Hub",
+                    "icon": "resources/icon.svg"
+                }
+            ]
+        },
+        "views": {
+            "privateExtensionHub": [
+                {
+                    "type": "webview",
+                    "id": "privateExtensionHub.sidebarView",
+                    "name": "Extensions"
+                }
+            ]
+        },
         "commands": [
             {
                 "command": "hidka.searchExtension",
                 "title": "Search Extensions in Open VSX"
+            },
+            {
+                "command": "hidka.refreshExtensions",
+                "title": "Refresh",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "hidka.searchInTreeView",
+                "title": "Search Extensions",
+                "icon": "$(search)"
+            },
+            {
+                "command": "hidka.installExtension",
+                "title": "Install",
+                "icon": "$(cloud-download)"
+            },
+            {
+                "command": "hidka.uninstallExtension",
+                "title": "Uninstall",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "hidka.updateExtension",
+                "title": "Update",
+                "icon": "$(arrow-up)"
+            },
+            {
+                "command": "hidka.openExtensionDetail",
+                "title": "Open Extension Details"
             }
         ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "hidka.refreshExtensions",
+                    "when": "view == privateExtensionHub.sidebarView",
+                    "group": "navigation@1"
+                }
+            ]
+        },
         "configuration": {
             "title": "Private Extension Hub",
             "properties": {
@@ -43,22 +99,28 @@
         "pretest": "npm run compile-tests && npm run compile && npm run lint",
         "check-types": "tsc --noEmit",
         "lint": "eslint src",
-        "test": "vscode-test"
+        "test": "vscode-test",
+        "test:unit": "npm run compile-tests && mocha --ui tdd out/test/openVSXClient.test.js out/test/openVSXRepository.test.js out/test/extensionManager.test.js out/test/extensionTreeDataProvider.test.js out/test/extensionDetailPanel.test.js out/test/sidebarViewHtml.test.js out/test/nativeUiFoundation.test.js"
     },
     "devDependencies": {
-        "@types/vscode": "^1.138.0",
+        "@types/markdown-it": "^14.2.0",
         "@types/mocha": "^10.0.10",
         "@types/node": "24.x",
-        "typescript-eslint": "^8.61.1",
-        "eslint": "^10.5.0",
+        "@types/vscode": "^1.138.0",
+        "@vscode/test-cli": "^0.0.15",
+        "@vscode/test-electron": "^3.0.0",
         "esbuild": "^0.28.1",
+        "eslint": "^10.5.0",
         "npm-run-all": "^4.1.5",
         "typescript": "^6.0.3",
-        "@vscode/test-cli": "^0.0.15",
-        "@vscode/test-electron": "^3.0.0"
+        "typescript-eslint": "^8.61.1"
     },
     "overrides": {
         "diff": "^8.0.4",
         "serialize-javascript": "^7.0.6"
+    },
+    "dependencies": {
+        "@vscode/codicons": "^0.0.46-24",
+        "markdown-it": "^15.0.2"
     }
 }

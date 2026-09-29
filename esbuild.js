@@ -23,7 +23,27 @@ const esbuildProblemMatcherPlugin = {
 	},
 };
 
+const fs = require('fs');
+const path = require('path');
+
+function copyCodicons() {
+	const srcDir = path.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist');
+	const destDir = path.join(__dirname, 'media', 'codicons');
+	if (!fs.existsSync(destDir)) {
+		fs.mkdirSync(destDir, { recursive: true });
+	}
+	const files = ['codicon.css', 'codicon.ttf'];
+	for (const f of files) {
+		const srcFile = path.join(srcDir, f);
+		const destFile = path.join(destDir, f);
+		if (fs.existsSync(srcFile)) {
+			fs.copyFileSync(srcFile, destFile);
+		}
+	}
+}
+
 async function main() {
+	copyCodicons();
 	const ctx = await esbuild.context({
 		entryPoints: [
 			'src/extension.ts'

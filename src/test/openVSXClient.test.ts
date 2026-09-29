@@ -204,6 +204,95 @@ suite('OpenVSXClient Test Suite', () => {
         assert.strictEqual(readme, '# Test Readme');
     });
 
+    test('getChangelog should fetch changelog content or return undefined if missing', async () => {
+        globalThis.fetch = (async (url: string | URL | Request) => {
+            const strUrl = String(url);
+            if (strUrl === `${baseUrl}/api/test-ns/test-ext`) {
+                return {
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    json: async () => ({
+                        namespace: 'test-ns',
+                        name: 'test-ext',
+                        version: '1.0.0',
+                        files: { changelog: 'https://fake/changelog.md' },
+                    }),
+                } as Response;
+            } else if (strUrl === 'https://fake/changelog.md') {
+                return {
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    text: async () => '## 1.0.0 Changelog',
+                } as Response;
+            }
+            throw new Error(`Unexpected url: ${strUrl}`);
+        }) as typeof fetch;
+
+        const client = new OpenVSXClient(baseUrl);
+        const changelog = await client.getChangelog('test-ns', 'test-ext');
+        assert.strictEqual(changelog, '## 1.0.0 Changelog');
+    });
+
+    test('getChangelog should return undefined when files.changelog is missing', async () => {
+        globalThis.fetch = (async () => {
+            return {
+                ok: true,
+                status: 200,
+                statusText: 'OK',
+                json: async () => ({
+                    namespace: 'test-ns',
+                    name: 'test-ext',
+                    version: '1.0.0',
+                    files: {},
+                }),
+            } as Response;
+        }) as typeof fetch;
+
+        const client = new OpenVSXClient(baseUrl);
+        const changelog = await client.getChangelog('test-ns', 'test-ext');
+        assert.strictEqual(changelog, undefined);
+    });
+
+    test('getManifest should fetch and parse package.json', async () => {
+        globalThis.fetch = (async (url: string | URL | Request) => {
+            const strUrl = String(url);
+            if (strUrl === `${baseUrl}/api/test-ns/test-ext`) {
+                return {
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    json: async () => ({
+                        namespace: 'test-ns',
+                        name: 'test-ext',
+                        version: '1.0.0',
+                        files: { manifest: 'https://fake/package.json' },
+                    }),
+                } as Response;
+            } else if (strUrl === 'https://fake/package.json') {
+                return {
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    json: async () => ({
+                        name: 'test-ext',
+                        contributes: {
+                            commands: [{ command: 'test.run', title: 'Run Test' }],
+                        },
+                    }),
+                } as Response;
+            }
+            throw new Error(`Unexpected url: ${strUrl}`);
+        }) as typeof fetch;
+
+        const client = new OpenVSXClient(baseUrl);
+        const manifest = await client.getManifest('test-ns', 'test-ext');
+        assert.ok(manifest);
+        assert.strictEqual(manifest?.name, 'test-ext');
+        assert.strictEqual(manifest?.contributes?.commands?.[0]?.command, 'test.run');
+    });
+
     test('OpenVSXError should contain status, statusText, and url', () => {
         const error = new OpenVSXError(404, 'Not Found', 'https://example.com/api');
         assert.strictEqual(error.status, 404);
