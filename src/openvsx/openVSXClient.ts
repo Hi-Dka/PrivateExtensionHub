@@ -17,9 +17,6 @@ export class OpenVSXClient {
         this.logger = logger;
     }
 
-    /**
-     * 搜索扩展
-     */
     async search(
         query: string,
         size = 20,
@@ -32,7 +29,7 @@ export class OpenVSXClient {
         });
 
         this.logger?.info(
-            `[OpenVSX] 正在搜索扩展: query="${query}", size=${size}, offset=${offset}`,
+            `[OpenVSX] Searching extensions: query="${query}", size=${size}, offset=${offset}`,
         );
 
         return this.request<OpenVSXSearchResult>(
@@ -40,15 +37,12 @@ export class OpenVSXClient {
         );
     }
 
-    /**
-     * 获取扩展详情
-     */
     async getExtension(
         namespace: string,
         name: string,
     ): Promise<OpenVSXExtension> {
         this.logger?.info(
-            `[OpenVSX] 正在获取扩展详情: ${namespace}.${name}`,
+            `[OpenVSX] Fetching extension details: ${namespace}.${name}`,
         );
 
         return this.request<OpenVSXExtension>(
@@ -56,12 +50,9 @@ export class OpenVSXClient {
         );
     }
 
-    /**
-     * 获取扩展所有可用版本号列表
-     */
     async getVersions(namespace: string, name: string): Promise<string[]> {
         this.logger?.info(
-            `[OpenVSX] 正在获取版本列表: ${namespace}.${name}`,
+            `[OpenVSX] Fetching version list: ${namespace}.${name}`,
         );
 
         const result = await this.getExtension(namespace, name);
@@ -71,28 +62,25 @@ export class OpenVSXClient {
                 (ver) => ver !== 'latest' && ver !== 'pre-release',
             );
             this.logger?.info(
-                `[OpenVSX] 获取到 ${versions.length} 个版本: ${namespace}.${name}`,
+                `[OpenVSX] Found ${versions.length} versions: ${namespace}.${name}`,
             );
             return versions;
         }
 
         const fallback = result.version ? [result.version] : [];
         this.logger?.info(
-            `[OpenVSX] 使用当前版本作为回退: ${namespace}.${name}@${fallback[0] ?? 'unknown'}`,
+            `[OpenVSX] Using current version as fallback: ${namespace}.${name}@${fallback[0] ?? 'unknown'}`,
         );
         return fallback;
     }
 
-    /**
-     * 获取指定版本的 VSIX 下载地址
-     */
     async getDownloadUrl(
         namespace: string,
         name: string,
         version: string,
     ): Promise<string> {
         this.logger?.info(
-            `[OpenVSX] 正在解析 VSIX 下载地址: ${namespace}.${name}@${version}`,
+            `[OpenVSX] Resolving VSIX download URL: ${namespace}.${name}@${version}`,
         );
 
         let downloadUrl: string | undefined;
@@ -113,20 +101,17 @@ export class OpenVSXClient {
             throw new Error(errMsg);
         }
 
-        this.logger?.info(`[OpenVSX] 下载链接已获取: ${downloadUrl}`);
+        this.logger?.info(`[OpenVSX] Download URL resolved: ${downloadUrl}`);
         return downloadUrl;
     }
 
-    /**
-     * 获取 README 文档
-     */
     async getReadme(
         namespace: string,
         name: string,
         version?: string,
     ): Promise<string> {
         this.logger?.info(
-            `[OpenVSX] 正在获取 README: ${namespace}.${name}@${version ?? 'latest'}`,
+            `[OpenVSX] Fetching README: ${namespace}.${name}@${version ?? 'latest'}`,
         );
 
         let readmeUrl: string | undefined;
@@ -148,13 +133,13 @@ export class OpenVSXClient {
         }
 
         const startTime = Date.now();
-        this.logger?.info(`[HTTP] GET README 内容: ${readmeUrl}`);
+        this.logger?.info(`[HTTP] GET README content: ${readmeUrl}`);
         const response = await fetch(readmeUrl);
         const duration = Date.now() - startTime;
 
         if (!response.ok) {
             this.logger?.error(
-                `[HTTP] README 请求失败: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
+                `[HTTP] Failed to fetch README: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
             );
             throw new Error(
                 `Failed to fetch README: ${response.status} ${response.statusText}`,
@@ -163,21 +148,18 @@ export class OpenVSXClient {
 
         const text = await response.text();
         this.logger?.info(
-            `[OpenVSX] README 获取成功，共 ${text.length} 字符 (${duration}ms)`,
+            `[OpenVSX] README fetched successfully, ${text.length} characters (${duration}ms)`,
         );
         return text;
     }
 
-    /**
-     * 获取 CHANGELOG 更新日志文档
-     */
     async getChangelog(
         namespace: string,
         name: string,
         version?: string,
     ): Promise<string | undefined> {
         this.logger?.info(
-            `[OpenVSX] 正在获取 CHANGELOG: ${namespace}.${name}@${version ?? 'latest'}`,
+            `[OpenVSX] Fetching CHANGELOG: ${namespace}.${name}@${version ?? 'latest'}`,
         );
 
         let changelogUrl: string | undefined;
@@ -194,40 +176,37 @@ export class OpenVSXClient {
 
         if (!changelogUrl) {
             this.logger?.info(
-                `[OpenVSX] CHANGELOG 未提供: ${namespace}.${name}@${version ?? 'latest'}`,
+                `[OpenVSX] CHANGELOG not provided: ${namespace}.${name}@${version ?? 'latest'}`,
             );
             return undefined;
         }
 
         const startTime = Date.now();
-        this.logger?.info(`[HTTP] GET CHANGELOG 内容: ${changelogUrl}`);
+        this.logger?.info(`[HTTP] GET CHANGELOG content: ${changelogUrl}`);
         const response = await fetch(changelogUrl);
         const duration = Date.now() - startTime;
 
         if (!response.ok) {
             this.logger?.warn(
-                `[HTTP] CHANGELOG 请求失败: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
+                `[HTTP] Failed to fetch CHANGELOG: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
             );
             return undefined;
         }
 
         const text = await response.text();
         this.logger?.info(
-            `[OpenVSX] CHANGELOG 获取成功，共 ${text.length} 字符 (${duration}ms)`,
+            `[OpenVSX] CHANGELOG fetched successfully, ${text.length} characters (${duration}ms)`,
         );
         return text;
     }
 
-    /**
-     * 获取扩展清单 (package.json)
-     */
     async getManifest(
         namespace: string,
         name: string,
         version?: string,
     ): Promise<ExtensionManifest | undefined> {
         this.logger?.info(
-            `[OpenVSX] 正在获取 Manifest: ${namespace}.${name}@${version ?? 'latest'}`,
+            `[OpenVSX] Fetching manifest: ${namespace}.${name}@${version ?? 'latest'}`,
         );
 
         let manifestUrl: string | undefined;
@@ -244,38 +223,35 @@ export class OpenVSXClient {
 
         if (!manifestUrl) {
             this.logger?.info(
-                `[OpenVSX] Manifest 未提供: ${namespace}.${name}@${version ?? 'latest'}`,
+                `[OpenVSX] Manifest not provided: ${namespace}.${name}@${version ?? 'latest'}`,
             );
             return undefined;
         }
 
         const startTime = Date.now();
-        this.logger?.info(`[HTTP] GET Manifest 内容: ${manifestUrl}`);
+        this.logger?.info(`[HTTP] GET Manifest content: ${manifestUrl}`);
         const response = await fetch(manifestUrl);
         const duration = Date.now() - startTime;
 
         if (!response.ok) {
             this.logger?.warn(
-                `[HTTP] Manifest 请求失败: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
+                `[HTTP] Failed to fetch manifest: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
             );
             return undefined;
         }
 
         const manifest = (await response.json()) as ExtensionManifest;
         this.logger?.info(
-            `[OpenVSX] Manifest 获取成功 (${duration}ms)`,
+            `[OpenVSX] Manifest fetched successfully (${duration}ms)`,
         );
         return manifest;
     }
 
-    /**
-     * 通用 HTTP 请求
-     */
     private async request<T>(path: string): Promise<T> {
         const url = `${this.baseUrl}${path}`;
         const startTime = Date.now();
 
-        this.logger?.info(`[HTTP] 发起请求: GET ${url}`);
+        this.logger?.info(`[HTTP] Sending request: GET ${url}`);
 
         try {
             const response = await fetch(url);
@@ -283,19 +259,19 @@ export class OpenVSXClient {
 
             if (!response.ok) {
                 this.logger?.error(
-                    `[HTTP] 请求失败: HTTP ${response.status} ${response.statusText} (${duration}ms) - ${url}`,
+                    `[HTTP] Request failed: HTTP ${response.status} ${response.statusText} (${duration}ms) - ${url}`,
                 );
                 throw new OpenVSXError(response.status, response.statusText, url);
             }
 
             this.logger?.info(
-                `[HTTP] 请求成功: HTTP ${response.status} OK (${duration}ms) - ${url}`,
+                `[HTTP] Request succeeded: HTTP ${response.status} OK (${duration}ms) - ${url}`,
             );
             return response.json() as T;
         } catch (error) {
             if (!(error instanceof OpenVSXError)) {
                 this.logger?.error(
-                    `[HTTP] 网络请求异常 (${Date.now() - startTime}ms): ${error instanceof Error ? error.message : String(error)}`,
+                    `[HTTP] Network request error (${Date.now() - startTime}ms): ${error instanceof Error ? error.message : String(error)}`,
                 );
             }
             throw error;
