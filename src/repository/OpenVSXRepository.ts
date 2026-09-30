@@ -149,6 +149,7 @@ export class OpenVSXRepository implements ExtensionRepository {
             categories: dto.categories && dto.categories.length > 0 ? dto.categories : undefined,
             tags: dto.tags && dto.tags.length > 0 ? dto.tags : undefined,
             license: dto.license,
+            lastReleasedDate: dto.timestamp,
             timestamp: dto.timestamp,
             verified: dto.verified,
             isPreRelease: dto.preRelease,

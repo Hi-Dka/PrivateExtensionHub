@@ -888,7 +888,7 @@
   function AdditionalDetails({ state, onOpenExternal, onCopyId }) {
     const { extension, manifest } = state;
     const [copied, setCopied] = d2(false);
-    const currentVersion = state.isInstalled ? state.installedVersion || extension.version : extension.version;
+    const currentVersion = state.isInstalled ? state.installedVersion || extension.installedVersion || extension.version : extension.version;
     const cleanRegistry = state.registryUrl.replace(/\/+$/, "");
     const vsixDownloadUrl = extension.downloadUrl || `${cleanRegistry}/api/${extension.namespace}/${extension.name}/${currentVersion}/file/${extension.namespace}.${extension.name}-${currentVersion}.vsix`;
     const categories = extension.categories && extension.categories.length > 0 ? extension.categories : manifest?.categories ?? [];
@@ -897,6 +897,8 @@
     const homepageUrl = extension.homepageUrl || manifest?.homepage;
     const license = extension.license || manifest?.license;
     const publisherName = extension.publisherDisplayName || extension.publisherName || extension.namespace || "";
+    const lastReleased = extension.lastReleasedDate ?? extension.timestamp;
+    const packageSize = extension.packageSize ?? extension.size;
     const resourceLink = (href, label, icon) => /* @__PURE__ */ u3("div", { class: "resource", children: [
       /* @__PURE__ */ u3("span", { class: `codicon ${icon}` }),
       /* @__PURE__ */ u3(
@@ -913,6 +915,26 @@
         }
       )
     ] });
+    const identifierEntry = /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+      /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Identifier" }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("span", { children: extension.id }),
+        /* @__PURE__ */ u3(
+          "button",
+          {
+            class: "copy-icon-btn",
+            title: "Copy Extension ID",
+            "data-copy": extension.id,
+            onClick: () => {
+              onCopyId();
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            },
+            children: /* @__PURE__ */ u3("span", { class: `codicon ${copied ? "codicon-check" : "codicon-copy"}` })
+          }
+        )
+      ] })
+    ] });
     return /* @__PURE__ */ u3("div", { class: "additional-details-content", children: [
       categories.length > 0 ? /* @__PURE__ */ u3("div", { class: "categories-container additional-details-element", children: [
         /* @__PURE__ */ u3("div", { class: "additional-details-title", children: "Categories" }),
@@ -927,30 +949,29 @@
           resourceLink(vsixDownloadUrl, "Download VSIX", "codicon-link-external")
         ] })
       ] }),
+      state.isInstalled ? /* @__PURE__ */ u3("div", { class: "installation-container additional-details-element", children: [
+        /* @__PURE__ */ u3("div", { class: "additional-details-title", children: "Installation" }),
+        /* @__PURE__ */ u3("div", { class: "more-info", children: [
+          identifierEntry,
+          /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Version" }),
+            /* @__PURE__ */ u3("div", { children: currentVersion })
+          ] }),
+          extension.lastUpdated ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Last Updated" }),
+            /* @__PURE__ */ u3("div", { children: formatDate(extension.lastUpdated) })
+          ] }) : null,
+          extension.installedSize ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Size" }),
+            /* @__PURE__ */ u3("div", { children: formatByteSize(extension.installedSize) })
+          ] }) : null
+        ] })
+      ] }) : null,
       /* @__PURE__ */ u3("div", { class: "more-info-container additional-details-element", children: [
         /* @__PURE__ */ u3("div", { class: "additional-details-title", children: "Marketplace" }),
         /* @__PURE__ */ u3("div", { class: "more-info", children: [
-          /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
-            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Identifier" }),
-            /* @__PURE__ */ u3("div", { children: [
-              /* @__PURE__ */ u3("span", { children: extension.id }),
-              /* @__PURE__ */ u3(
-                "button",
-                {
-                  class: "copy-icon-btn",
-                  title: "Copy Extension ID",
-                  "data-copy": extension.id,
-                  onClick: () => {
-                    onCopyId();
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  },
-                  children: /* @__PURE__ */ u3("span", { class: `codicon ${copied ? "codicon-check" : "codicon-copy"}` })
-                }
-              )
-            ] })
-          ] }),
-          /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+          !state.isInstalled ? identifierEntry : null,
+          !state.isInstalled ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Publisher" }),
             /* @__PURE__ */ u3("div", { children: [
               /* @__PURE__ */ u3("span", { children: publisherName }),
@@ -963,22 +984,22 @@
                 }
               ) : null
             ] })
-          ] }),
-          /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+          ] }) : null,
+          !state.isInstalled ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Version" }),
             /* @__PURE__ */ u3("div", { children: currentVersion })
-          ] }),
-          extension.timestamp ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
-            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Released" }),
-            /* @__PURE__ */ u3("div", { children: formatDate(extension.timestamp) })
           ] }) : null,
-          extension.lastUpdated ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
-            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Last Updated" }),
-            /* @__PURE__ */ u3("div", { children: formatDate(extension.lastUpdated) })
+          extension.publishedDate ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Published" }),
+            /* @__PURE__ */ u3("div", { children: formatDate(extension.publishedDate) })
           ] }) : null,
-          extension.size ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+          lastReleased ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Last Released" }),
+            /* @__PURE__ */ u3("div", { children: formatDate(lastReleased) })
+          ] }) : null,
+          packageSize ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Size" }),
-            /* @__PURE__ */ u3("div", { children: formatByteSize(extension.size) })
+            /* @__PURE__ */ u3("div", { children: formatByteSize(packageSize) })
           ] }) : null,
           extension.downloadCount ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Downloads" }),

@@ -1,18 +1,22 @@
 import type { ExtensionEngines } from './ExtensionManifest';
 
 export interface ExtensionInfo {
+    // =========================================================================
+    // 1. Core Identity & Presentation (Header & Summary)
+    // =========================================================================
+
     /**
-     * Unique identifier, format: `${namespace}.${name}` (e.g. `redhat.java`)
+     * Unique identifier, format: `${namespace}.${name}` (e.g. `formulahendry.auto-rename-tag`)
      */
     id: string;
 
     /**
-     * Extension publisher namespace (e.g. `redhat`)
+     * Extension publisher namespace (e.g. `formulahendry`)
      */
     namespace: string;
 
     /**
-     * Extension name (e.g. `java`)
+     * Extension name (e.g. `auto-rename-tag`)
      */
     name: string;
 
@@ -22,7 +26,7 @@ export interface ExtensionInfo {
     displayName: string;
 
     /**
-     * Current or latest version string (e.g. `1.57.0`)
+     * Current or latest version string (e.g. `0.1.10`)
      */
     version: string;
 
@@ -32,7 +36,7 @@ export interface ExtensionInfo {
     description: string;
 
     /**
-     * Publisher login/display name
+     * Publisher login/account name
      */
     publisherName?: string;
 
@@ -42,29 +46,43 @@ export interface ExtensionInfo {
     publisherDisplayName?: string;
 
     /**
+     * Whether publisher is verified
+     */
+    verified?: boolean;
+
+    /**
      * Extension icon URL
      */
     iconUrl?: string;
 
-    /**
-     * Source repository URL
-     */
-    repositoryUrl?: string;
+    // =========================================================================
+    // 2. Marketplace Cloud Metadata (Registry / Cloud)
+    // =========================================================================
 
     /**
-     * Homepage / documentation URL
+     * First published date in marketplace (ISO date string, Marketplace: Published)
      */
-    homepageUrl?: string;
+    publishedDate?: string;
 
     /**
-     * Issue tracker URL
+     * Release timestamp of current/latest version (ISO date string, Marketplace: Last Released)
      */
-    bugsUrl?: string;
+    lastReleasedDate?: string;
 
     /**
-     * Direct VSIX download URL
+     * Legacy alias for lastReleasedDate
      */
-    downloadUrl?: string;
+    timestamp?: string;
+
+    /**
+     * VSIX download package file size in bytes (Marketplace: Size)
+     */
+    packageSize?: number;
+
+    /**
+     * Legacy alias for packageSize
+     */
+    size?: number;
 
     /**
      * Total download count
@@ -97,44 +115,24 @@ export interface ExtensionInfo {
     license?: string;
 
     /**
-     * Release timestamp of this version (ISO date string)
+     * Source repository URL
      */
-    timestamp?: string;
+    repositoryUrl?: string;
 
     /**
-     * Last updated timestamp (ISO date string)
+     * Homepage / documentation URL
      */
-    lastUpdated?: string;
+    homepageUrl?: string;
 
     /**
-     * Published timestamp (ISO date string)
+     * Issue tracker URL
      */
-    publishedDate?: string;
+    bugsUrl?: string;
 
     /**
-     * Engine compatibility requirements
+     * Direct VSIX download URL
      */
-    engines?: ExtensionEngines;
-
-    /**
-     * Whether publisher is verified
-     */
-    verified?: boolean;
-
-    /**
-     * Whether this version is a pre-release
-     */
-    isPreRelease?: boolean;
-
-    /**
-     * Whether extension is marked as preview
-     */
-    preview?: boolean;
-
-    /**
-     * Package size in bytes
-     */
-    size?: number;
+    downloadUrl?: string;
 
     /**
      * Marketplace page URL
@@ -142,17 +140,46 @@ export interface ExtensionInfo {
     marketplaceUrl?: string;
 
     /**
-     * Local installation status: installed
+     * Engine compatibility requirements
+     */
+    engines?: ExtensionEngines;
+
+    /**
+     * Whether extension is marked as preview
+     */
+    preview?: boolean;
+
+    /**
+     * Whether this version is a pre-release
+     */
+    isPreRelease?: boolean;
+
+    // =========================================================================
+    // 3. Local Installation Status (Client / Machine)
+    // =========================================================================
+
+    /**
+     * Local installation status: whether installed on current machine
      */
     isInstalled?: boolean;
 
     /**
-     * Local installation status: installed version
+     * Local installation status: installed version string (Installation: Version)
      */
     installedVersion?: string;
 
     /**
-     * Local installation status: has update
+     * Local installation status: when extension was installed or updated locally (Installation: Last Updated)
+     */
+    lastUpdated?: string;
+
+    /**
+     * Local installation status: disk space consumed by installed extension (Installation: Size)
+     */
+    installedSize?: number;
+
+    /**
+     * Local installation status: whether a newer version is available in marketplace
      */
     hasUpdate?: boolean;
 }

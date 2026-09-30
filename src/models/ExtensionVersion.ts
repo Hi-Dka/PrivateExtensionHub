@@ -1,10 +1,46 @@
 import type { ExtensionEngines } from './ExtensionManifest';
 
+/**
+ * Optional descriptor for historical extension versions.
+ * Note: Core repository flows and interactive version selection (QuickPick)
+ * operate directly on version strings (string[]). This descriptor is reserved
+ * for future detailed version history views.
+ */
 export interface ExtensionVersion {
     /**
      * Version string (e.g. `1.57.0`)
      */
     version: string;
+
+    /**
+     * Release timestamp string of this specific version
+     */
+    releasedDate?: string;
+
+    /**
+     * Legacy alias for releasedDate
+     */
+    timestamp?: string;
+
+    /**
+     * VSIX package file size in bytes
+     */
+    packageSize?: number;
+
+    /**
+     * Legacy alias for packageSize
+     */
+    size?: number;
+
+    /**
+     * Target platform (e.g. `universal`, `linux-x64`)
+     */
+    targetPlatform?: string;
+
+    /**
+     * Engine compatibility requirements for this version
+     */
+    engines?: ExtensionEngines;
 
     /**
      * Direct VSIX download URL
@@ -22,21 +58,6 @@ export interface ExtensionVersion {
     changelogUrl?: string;
 
     /**
-     * Release timestamp string
-     */
-    timestamp?: string;
-
-    /**
-     * Target platform (e.g. `universal`, `linux-x64`)
-     */
-    targetPlatform?: string;
-
-    /**
-     * Engine compatibility requirements
-     */
-    engines?: ExtensionEngines;
-
-    /**
      * Whether this is the latest version
      */
     isLatest?: boolean;
@@ -45,9 +66,4 @@ export interface ExtensionVersion {
      * Whether this is a pre-release version
      */
     isPreRelease?: boolean;
-
-    /**
-     * Package size in bytes
-     */
-    size?: number;
 }

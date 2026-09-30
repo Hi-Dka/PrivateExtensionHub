@@ -9,15 +9,15 @@ export interface AdditionalDetailsProps {
 }
 
 /**
- * Reference DOM: `.additional-details-content` with the Categories, Resources,
- * and Marketplace sections.
+ * Reference DOM: `.additional-details-content` with Categories, Resources,
+ * and distinct Installation and Marketplace sections aligned with native VS Code.
  */
 export function AdditionalDetails({ state, onOpenExternal, onCopyId }: AdditionalDetailsProps) {
     const { extension, manifest } = state;
     const [copied, setCopied] = useState(false);
 
     const currentVersion = state.isInstalled
-        ? state.installedVersion || extension.version
+        ? state.installedVersion || extension.installedVersion || extension.version
         : extension.version;
     const cleanRegistry = state.registryUrl.replace(/\/+$/, '');
     const vsixDownloadUrl =
@@ -44,6 +44,9 @@ export function AdditionalDetails({ state, onOpenExternal, onCopyId }: Additiona
     const publisherName =
         extension.publisherDisplayName || extension.publisherName || extension.namespace || '';
 
+    const lastReleased = extension.lastReleasedDate ?? extension.timestamp;
+    const packageSize = extension.packageSize ?? extension.size;
+
     const resourceLink = (href: string, label: string, icon: string) => (
         <div class="resource">
             <span class={`codicon ${icon}`} />
@@ -58,6 +61,27 @@ export function AdditionalDetails({ state, onOpenExternal, onCopyId }: Additiona
             >
                 {label}
             </a>
+        </div>
+    );
+
+    const identifierEntry = (
+        <div class="more-info-entry">
+            <div class="more-info-entry-name">Identifier</div>
+            <div>
+                <span>{extension.id}</span>
+                <button
+                    class="copy-icon-btn"
+                    title="Copy Extension ID"
+                    data-copy={extension.id}
+                    onClick={() => {
+                        onCopyId();
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1500);
+                    }}
+                >
+                    <span class={`codicon ${copied ? 'codicon-check' : 'codicon-copy'}`} />
+                </button>
+            </div>
         </div>
     );
 
@@ -86,60 +110,72 @@ export function AdditionalDetails({ state, onOpenExternal, onCopyId }: Additiona
                 </div>
             </div>
 
+            {state.isInstalled ? (
+                <div class="installation-container additional-details-element">
+                    <div class="additional-details-title">Installation</div>
+                    <div class="more-info">
+                        {identifierEntry}
+                        <div class="more-info-entry">
+                            <div class="more-info-entry-name">Version</div>
+                            <div>{currentVersion}</div>
+                        </div>
+                        {extension.lastUpdated ? (
+                            <div class="more-info-entry">
+                                <div class="more-info-entry-name">Last Updated</div>
+                                <div>{formatDate(extension.lastUpdated)}</div>
+                            </div>
+                        ) : null}
+                        {extension.installedSize ? (
+                            <div class="more-info-entry">
+                                <div class="more-info-entry-name">Size</div>
+                                <div>{formatByteSize(extension.installedSize)}</div>
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
+            ) : null}
+
             <div class="more-info-container additional-details-element">
                 <div class="additional-details-title">Marketplace</div>
                 <div class="more-info">
-                    <div class="more-info-entry">
-                        <div class="more-info-entry-name">Identifier</div>
-                        <div>
-                            <span>{extension.id}</span>
-                            <button
-                                class="copy-icon-btn"
-                                title="Copy Extension ID"
-                                data-copy={extension.id}
-                                onClick={() => {
-                                    onCopyId();
-                                    setCopied(true);
-                                    setTimeout(() => setCopied(false), 1500);
-                                }}
-                            >
-                                <span class={`codicon ${copied ? 'codicon-check' : 'codicon-copy'}`} />
-                            </button>
-                        </div>
-                    </div>
-                    <div class="more-info-entry">
-                        <div class="more-info-entry-name">Publisher</div>
-                        <div>
-                            <span>{publisherName}</span>
-                            {extension.verified ? (
-                                <span
-                                    class="codicon codicon-verified"
-                                    title="Verified Publisher"
-                                    style={{ marginLeft: '4px', verticalAlign: 'middle' }}
-                                />
-                            ) : null}
-                        </div>
-                    </div>
-                    <div class="more-info-entry">
-                        <div class="more-info-entry-name">Version</div>
-                        <div>{currentVersion}</div>
-                    </div>
-                    {extension.timestamp ? (
+                    {!state.isInstalled ? identifierEntry : null}
+                    {!state.isInstalled ? (
                         <div class="more-info-entry">
-                            <div class="more-info-entry-name">Released</div>
-                            <div>{formatDate(extension.timestamp)}</div>
+                            <div class="more-info-entry-name">Publisher</div>
+                            <div>
+                                <span>{publisherName}</span>
+                                {extension.verified ? (
+                                    <span
+                                        class="codicon codicon-verified"
+                                        title="Verified Publisher"
+                                        style={{ marginLeft: '4px', verticalAlign: 'middle' }}
+                                    />
+                                ) : null}
+                            </div>
                         </div>
                     ) : null}
-                    {extension.lastUpdated ? (
+                    {!state.isInstalled ? (
                         <div class="more-info-entry">
-                            <div class="more-info-entry-name">Last Updated</div>
-                            <div>{formatDate(extension.lastUpdated)}</div>
+                            <div class="more-info-entry-name">Version</div>
+                            <div>{currentVersion}</div>
                         </div>
                     ) : null}
-                    {extension.size ? (
+                    {extension.publishedDate ? (
+                        <div class="more-info-entry">
+                            <div class="more-info-entry-name">Published</div>
+                            <div>{formatDate(extension.publishedDate)}</div>
+                        </div>
+                    ) : null}
+                    {lastReleased ? (
+                        <div class="more-info-entry">
+                            <div class="more-info-entry-name">Last Released</div>
+                            <div>{formatDate(lastReleased)}</div>
+                        </div>
+                    ) : null}
+                    {packageSize ? (
                         <div class="more-info-entry">
                             <div class="more-info-entry-name">Size</div>
-                            <div>{formatByteSize(extension.size)}</div>
+                            <div>{formatByteSize(packageSize)}</div>
                         </div>
                     ) : null}
                     {extension.downloadCount ? (
