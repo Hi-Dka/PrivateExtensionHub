@@ -1,7 +1,7 @@
 import { OpenVSXExtension, OpenVSXSearchResult } from './models/index';
 import { ExtensionManifest } from '../models/index';
 
-export interface ILogger {
+interface ILogger {
     debug(message: string, ...args: any[]): void;
     info(message: string, ...args: any[]): void;
     warn(message: string, ...args: any[]): void;
@@ -32,7 +32,7 @@ export class OpenVSXClient {
             `[OpenVSX] Searching extensions: query="${query}", size=${size}, offset=${offset}`,
         );
 
-        return this.request<OpenVSXSearchResult>(
+        return this.requestJson<OpenVSXSearchResult>(
             `/api/-/search?${params.toString()}`,
         );
     }
@@ -45,7 +45,7 @@ export class OpenVSXClient {
             `[OpenVSX] Fetching extension details: ${namespace}.${name}`,
         );
 
-        return this.request<OpenVSXExtension>(
+        return await this.requestJson<OpenVSXExtension>(
             `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
         );
     }
@@ -89,7 +89,7 @@ export class OpenVSXClient {
         if (extension.version === version && extension.files?.download) {
             downloadUrl = extension.files.download;
         } else {
-            const versionDetail = await this.request<OpenVSXExtension>(
+            const versionDetail = await this.requestJson<OpenVSXExtension>(
                 `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
             );
             downloadUrl = versionDetail.files?.download;
@@ -120,10 +120,10 @@ export class OpenVSXClient {
             const extension = await this.getExtension(namespace, name);
             readmeUrl = extension.files?.readme;
         } else {
-            const versionDetail = await this.request<OpenVSXExtension>(
+            const versionDetail = await this.requestJson<OpenVSXExtension>(
                 `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
             );
-            readmeUrl = versionDetail.files?.readme;
+            readmeUrl = versionDetail?.files?.readme;
         }
 
         if (!readmeUrl) {
@@ -132,25 +132,7 @@ export class OpenVSXClient {
             throw new Error(errMsg);
         }
 
-        const startTime = Date.now();
-        this.logger?.info(`[HTTP] GET README content: ${readmeUrl}`);
-        const response = await fetch(readmeUrl);
-        const duration = Date.now() - startTime;
-
-        if (!response.ok) {
-            this.logger?.error(
-                `[HTTP] Failed to fetch README: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
-            );
-            throw new Error(
-                `Failed to fetch README: ${response.status} ${response.statusText}`,
-            );
-        }
-
-        const text = await response.text();
-        this.logger?.info(
-            `[OpenVSX] README fetched successfully, ${text.length} characters (${duration}ms)`,
-        );
-        return text;
+        return this.requestText(readmeUrl);
     }
 
     async getChangelog(
@@ -168,10 +150,10 @@ export class OpenVSXClient {
             const extension = await this.getExtension(namespace, name);
             changelogUrl = extension.files?.changelog;
         } else {
-            const versionDetail = await this.request<OpenVSXExtension>(
+            const versionDetail = await this.requestJson<OpenVSXExtension>(
                 `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
             );
-            changelogUrl = versionDetail.files?.changelog;
+            changelogUrl = versionDetail?.files?.changelog;
         }
 
         if (!changelogUrl) {
@@ -181,23 +163,7 @@ export class OpenVSXClient {
             return undefined;
         }
 
-        const startTime = Date.now();
-        this.logger?.info(`[HTTP] GET CHANGELOG content: ${changelogUrl}`);
-        const response = await fetch(changelogUrl);
-        const duration = Date.now() - startTime;
-
-        if (!response.ok) {
-            this.logger?.warn(
-                `[HTTP] Failed to fetch CHANGELOG: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
-            );
-            return undefined;
-        }
-
-        const text = await response.text();
-        this.logger?.info(
-            `[OpenVSX] CHANGELOG fetched successfully, ${text.length} characters (${duration}ms)`,
-        );
-        return text;
+        return this.requestText(changelogUrl, { allowNotFound: true });
     }
 
     async getManifest(
@@ -215,10 +181,10 @@ export class OpenVSXClient {
             const extension = await this.getExtension(namespace, name);
             manifestUrl = extension.files?.manifest;
         } else {
-            const versionDetail = await this.request<OpenVSXExtension>(
+            const versionDetail = await this.requestJson<OpenVSXExtension>(
                 `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
             );
-            manifestUrl = versionDetail.files?.manifest;
+            manifestUrl = versionDetail?.files?.manifest;
         }
 
         if (!manifestUrl) {
@@ -228,27 +194,25 @@ export class OpenVSXClient {
             return undefined;
         }
 
-        const startTime = Date.now();
-        this.logger?.info(`[HTTP] GET Manifest content: ${manifestUrl}`);
-        const response = await fetch(manifestUrl);
-        const duration = Date.now() - startTime;
-
-        if (!response.ok) {
-            this.logger?.warn(
-                `[HTTP] Failed to fetch manifest: HTTP ${response.status} ${response.statusText} (${duration}ms)`,
-            );
-            return undefined;
-        }
-
-        const manifest = (await response.json()) as ExtensionManifest;
-        this.logger?.info(
-            `[OpenVSX] Manifest fetched successfully (${duration}ms)`,
-        );
-        return manifest;
+        return this.requestJson<ExtensionManifest>(manifestUrl, {
+            allowNotFound: true,
+        });
     }
 
-    private async request<T>(path: string): Promise<T> {
-        const url = `${this.baseUrl}${path}`;
+    private resolveUrl(pathOrUrl: string): string {
+        if (/^https?:\/\//i.test(pathOrUrl)) {
+            return pathOrUrl;
+        }
+        const cleanPath = pathOrUrl.startsWith('/')
+            ? pathOrUrl
+            : `/${pathOrUrl}`;
+        return `${this.baseUrl}${cleanPath}`;
+    }
+
+    private async requestRaw(
+        pathOrUrl: string,
+    ): Promise<{ response: Response; url: string; duration: number }> {
+        const url = this.resolveUrl(pathOrUrl);
         const startTime = Date.now();
 
         this.logger?.info(`[HTTP] Sending request: GET ${url}`);
@@ -256,26 +220,77 @@ export class OpenVSXClient {
         try {
             const response = await fetch(url);
             const duration = Date.now() - startTime;
-
-            if (!response.ok) {
-                this.logger?.error(
-                    `[HTTP] Request failed: HTTP ${response.status} ${response.statusText} (${duration}ms) - ${url}`,
-                );
-                throw new OpenVSXError(response.status, response.statusText, url);
-            }
-
-            this.logger?.info(
-                `[HTTP] Request succeeded: HTTP ${response.status} OK (${duration}ms) - ${url}`,
-            );
-            return response.json() as T;
+            return { response, url, duration };
         } catch (error) {
-            if (!(error instanceof OpenVSXError)) {
-                this.logger?.error(
-                    `[HTTP] Network request error (${Date.now() - startTime}ms): ${error instanceof Error ? error.message : String(error)}`,
-                );
-            }
+            const duration = Date.now() - startTime;
+            this.logger?.error(
+                `[HTTP] Network request error (${duration}ms): ${error instanceof Error ? error.message : String(error)}`,
+            );
             throw error;
         }
+    }
+
+    private async requestJson<T>(pathOrUrl: string): Promise<T>;
+    private async requestJson<T>(
+        pathOrUrl: string,
+        options: { allowNotFound: true },
+    ): Promise<T | undefined>;
+    private async requestJson<T>(
+        pathOrUrl: string,
+        options?: { allowNotFound?: boolean },
+    ): Promise<T | undefined> {
+        const { response, url, duration } = await this.requestRaw(pathOrUrl);
+
+        if (!response.ok) {
+            if (options?.allowNotFound && response.status === 404) {
+                this.logger?.warn(
+                    `[HTTP] Request not found (404): ${response.statusText} (${duration}ms) - ${url}`,
+                );
+                return undefined;
+            }
+
+            this.logger?.error(
+                `[HTTP] Request failed: HTTP ${response.status} ${response.statusText} (${duration}ms) - ${url}`,
+            );
+            throw new OpenVSXError(response.status, response.statusText, url);
+        }
+
+        this.logger?.info(
+            `[HTTP] Request succeeded: HTTP ${response.status} OK (${duration}ms) - ${url}`,
+        );
+        return (await response.json()) as T;
+    }
+
+    private async requestText(pathOrUrl: string): Promise<string>;
+    private async requestText(
+        pathOrUrl: string,
+        options: { allowNotFound: true },
+    ): Promise<string | undefined>;
+    private async requestText(
+        pathOrUrl: string,
+        options?: { allowNotFound?: boolean },
+    ): Promise<string | undefined> {
+        const { response, url, duration } = await this.requestRaw(pathOrUrl);
+
+        if (!response.ok) {
+            if (options?.allowNotFound && response.status === 404) {
+                this.logger?.warn(
+                    `[HTTP] Request not found (404): ${response.statusText} (${duration}ms) - ${url}`,
+                );
+                return undefined;
+            }
+
+            this.logger?.error(
+                `[HTTP] Request failed: HTTP ${response.status} ${response.statusText} (${duration}ms) - ${url}`,
+            );
+            throw new OpenVSXError(response.status, response.statusText, url);
+        }
+
+        const text = await response.text();
+        this.logger?.info(
+            `[HTTP] Request succeeded: HTTP ${response.status} OK, ${text.length} chars (${duration}ms) - ${url}`,
+        );
+        return text;
     }
 }
 
