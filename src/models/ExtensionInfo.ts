@@ -1,76 +1,158 @@
+import type { ExtensionEngines } from './ExtensionManifest';
+
 export interface ExtensionInfo {
     /**
-     * 全局唯一标识符，格式为 `${namespace}.${name}` (例如: `redhat.java`)
+     * Unique identifier, format: `${namespace}.${name}` (e.g. `redhat.java`)
      */
     id: string;
 
     /**
-     * 扩展发布者命名空间 (例如: `redhat`)
+     * Extension publisher namespace (e.g. `redhat`)
      */
     namespace: string;
 
     /**
-     * 扩展名称 (例如: `java`)
+     * Extension name (e.g. `java`)
      */
     name: string;
 
     /**
-     * 显示名称 (如果发布者未提供，默认回退为 name)
+     * Display name (defaults to name if not provided)
      */
     displayName: string;
 
     /**
-     * 当前或最新版本号 (例如: `1.57.0`)
+     * Current or latest version string (e.g. `1.57.0`)
      */
     version: string;
 
     /**
-     * 扩展简介描述
+     * Extension short description
      */
     description: string;
 
     /**
-     * 发布者显示名称
+     * Publisher login/display name
      */
     publisherName?: string;
 
     /**
-     * 扩展图标 URL
+     * Human-friendly publisher display name
+     */
+    publisherDisplayName?: string;
+
+    /**
+     * Extension icon URL
      */
     iconUrl?: string;
 
     /**
-     * 源码仓库 URL
+     * Source repository URL
      */
     repositoryUrl?: string;
 
     /**
-     * 下载统计计数
+     * Homepage / documentation URL
+     */
+    homepageUrl?: string;
+
+    /**
+     * Issue tracker URL
+     */
+    bugsUrl?: string;
+
+    /**
+     * Direct VSIX download URL
+     */
+    downloadUrl?: string;
+
+    /**
+     * Total download count
      */
     downloadCount: number;
 
     /**
-     * 用户评分 (0.0 ~ 5.0)
+     * Average rating (0.0 ~ 5.0)
      */
     rating?: number;
 
     /**
-     * 评价总数
+     * Review / rating count
      */
     ratingCount?: number;
 
     /**
-     * 业务状态：本地是否已安装
+     * Categories
+     */
+    categories?: string[];
+
+    /**
+     * Keywords / tags
+     */
+    tags?: string[];
+
+    /**
+     * SPDX license identifier or license text
+     */
+    license?: string;
+
+    /**
+     * Release timestamp of this version (ISO date string)
+     */
+    timestamp?: string;
+
+    /**
+     * Last updated timestamp (ISO date string)
+     */
+    lastUpdated?: string;
+
+    /**
+     * Published timestamp (ISO date string)
+     */
+    publishedDate?: string;
+
+    /**
+     * Engine compatibility requirements
+     */
+    engines?: ExtensionEngines;
+
+    /**
+     * Whether publisher is verified
+     */
+    verified?: boolean;
+
+    /**
+     * Whether this version is a pre-release
+     */
+    isPreRelease?: boolean;
+
+    /**
+     * Whether extension is marked as preview
+     */
+    preview?: boolean;
+
+    /**
+     * Package size in bytes
+     */
+    size?: number;
+
+    /**
+     * Marketplace page URL
+     */
+    marketplaceUrl?: string;
+
+    /**
+     * Local installation status: installed
      */
     isInstalled?: boolean;
 
     /**
-     * 业务状态：本地已安装的版本号
+     * Local installation status: installed version
      */
     installedVersion?: string;
 
     /**
-     * 业务状态：是否有更新可用
+     * Local installation status: has update
      */
     hasUpdate?: boolean;
 }

@@ -131,14 +131,29 @@ export class OpenVSXRepository implements ExtensionRepository {
                 dto.publishedBy?.displayName ||
                 dto.publishedBy?.loginName ||
                 dto.namespace,
+            publisherDisplayName:
+                dto.publishedBy?.displayName ||
+                dto.namespaceDisplayName ||
+                dto.publishedBy?.fullName,
             iconUrl: dto.files?.icon,
             repositoryUrl: dto.repository || dto.homepage,
+            homepageUrl: dto.homepage,
+            bugsUrl: dto.bugs,
+            downloadUrl: dto.files?.download,
             downloadCount: dto.downloadCount ?? 0,
             rating:
                 dto.averageRating !== undefined && dto.averageRating !== null
                     ? Math.round(dto.averageRating * 10) / 10
                     : undefined,
             ratingCount: dto.reviewCount,
+            categories: dto.categories && dto.categories.length > 0 ? dto.categories : undefined,
+            tags: dto.tags && dto.tags.length > 0 ? dto.tags : undefined,
+            license: dto.license,
+            timestamp: dto.timestamp,
+            verified: dto.verified,
+            isPreRelease: dto.preRelease,
+            preview: dto.preview,
+            engines: dto.engines,
         };
     }
 }

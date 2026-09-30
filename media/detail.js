@@ -491,6 +491,36 @@
     }
     return String(Math.round(rating * 2) / 2);
   }
+  function formatDate(timestamp) {
+    if (!timestamp) {
+      return "";
+    }
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return timestamp;
+      }
+      return date.toLocaleDateString(void 0, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    } catch {
+      return timestamp;
+    }
+  }
+  function formatByteSize(bytes) {
+    if (bytes === void 0 || bytes === null || bytes <= 0) {
+      return "";
+    }
+    if (bytes >= 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+    if (bytes >= 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${bytes} B`;
+  }
 
   // src/webview/shared/RatingWidget.tsx
   function starClasses(rating) {
@@ -860,8 +890,13 @@
     const [copied, setCopied] = d2(false);
     const currentVersion = state.isInstalled ? state.installedVersion || extension.version : extension.version;
     const cleanRegistry = state.registryUrl.replace(/\/+$/, "");
-    const vsixDownloadUrl = `${cleanRegistry}/api/${extension.namespace}/${extension.name}/${currentVersion}/file/${extension.namespace}.${extension.name}-${currentVersion}.vsix`;
-    const categories = manifest?.categories ?? [];
+    const vsixDownloadUrl = extension.downloadUrl || `${cleanRegistry}/api/${extension.namespace}/${extension.name}/${currentVersion}/file/${extension.namespace}.${extension.name}-${currentVersion}.vsix`;
+    const categories = extension.categories && extension.categories.length > 0 ? extension.categories : manifest?.categories ?? [];
+    const repositoryUrl = extension.repositoryUrl || (typeof manifest?.repository === "string" ? manifest.repository : manifest?.repository?.url);
+    const bugsUrl = extension.bugsUrl || (typeof manifest?.bugs === "string" ? manifest.bugs : manifest?.bugs?.url);
+    const homepageUrl = extension.homepageUrl || manifest?.homepage;
+    const license = extension.license || manifest?.license;
+    const publisherName = extension.publisherDisplayName || extension.publisherName || extension.namespace || "";
     const resourceLink = (href, label, icon) => /* @__PURE__ */ u3("div", { class: "resource", children: [
       /* @__PURE__ */ u3("span", { class: `codicon ${icon}` }),
       /* @__PURE__ */ u3(
@@ -881,13 +916,14 @@
     return /* @__PURE__ */ u3("div", { class: "additional-details-content", children: [
       categories.length > 0 ? /* @__PURE__ */ u3("div", { class: "categories-container additional-details-element", children: [
         /* @__PURE__ */ u3("div", { class: "additional-details-title", children: "Categories" }),
-        /* @__PURE__ */ u3("div", { class: "categories", children: categories.map((category) => /* @__PURE__ */ u3("span", { class: "category", children: category })) })
+        /* @__PURE__ */ u3("div", { class: "categories", children: categories.map((category) => /* @__PURE__ */ u3("span", { class: "category", children: category }, category)) })
       ] }) : null,
       /* @__PURE__ */ u3("div", { class: "resources-container additional-details-element", children: [
         /* @__PURE__ */ u3("div", { class: "additional-details-title", children: "Resources" }),
         /* @__PURE__ */ u3("div", { class: "resources", children: [
-          extension.repositoryUrl ? resourceLink(extension.repositoryUrl, "Repository", "codicon-repo") : null,
-          manifest?.bugs?.url ? resourceLink(manifest.bugs.url, "Issues", "codicon-issues") : null,
+          repositoryUrl ? resourceLink(repositoryUrl, "Repository", "codicon-repo") : null,
+          bugsUrl ? resourceLink(bugsUrl, "Issues", "codicon-issues") : null,
+          homepageUrl ? resourceLink(homepageUrl, "Homepage", "codicon-home") : null,
           resourceLink(vsixDownloadUrl, "Download VSIX", "codicon-link-external")
         ] })
       ] }),
@@ -916,19 +952,41 @@
           ] }),
           /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Publisher" }),
-            /* @__PURE__ */ u3("div", { children: extension.namespace || "" })
+            /* @__PURE__ */ u3("div", { children: [
+              /* @__PURE__ */ u3("span", { children: publisherName }),
+              extension.verified ? /* @__PURE__ */ u3(
+                "span",
+                {
+                  class: "codicon codicon-verified",
+                  title: "Verified Publisher",
+                  style: { marginLeft: "4px", verticalAlign: "middle" }
+                }
+              ) : null
+            ] })
           ] }),
           /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Version" }),
             /* @__PURE__ */ u3("div", { children: currentVersion })
           ] }),
+          extension.timestamp ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Released" }),
+            /* @__PURE__ */ u3("div", { children: formatDate(extension.timestamp) })
+          ] }) : null,
+          extension.lastUpdated ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Last Updated" }),
+            /* @__PURE__ */ u3("div", { children: formatDate(extension.lastUpdated) })
+          ] }) : null,
+          extension.size ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+            /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Size" }),
+            /* @__PURE__ */ u3("div", { children: formatByteSize(extension.size) })
+          ] }) : null,
           extension.downloadCount ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "Downloads" }),
             /* @__PURE__ */ u3("div", { children: extension.downloadCount.toLocaleString() })
           ] }) : null,
-          manifest?.license ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
+          license ? /* @__PURE__ */ u3("div", { class: "more-info-entry", children: [
             /* @__PURE__ */ u3("div", { class: "more-info-entry-name", children: "License" }),
-            /* @__PURE__ */ u3("div", { children: manifest.license })
+            /* @__PURE__ */ u3("div", { children: license })
           ] }) : null
         ] })
       ] })

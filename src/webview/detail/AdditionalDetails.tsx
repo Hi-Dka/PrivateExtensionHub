@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import type { DetailState } from '../types';
+import { formatDate, formatByteSize } from '../shared/format';
 
 export interface AdditionalDetailsProps {
     state: DetailState;
@@ -19,9 +20,29 @@ export function AdditionalDetails({ state, onOpenExternal, onCopyId }: Additiona
         ? state.installedVersion || extension.version
         : extension.version;
     const cleanRegistry = state.registryUrl.replace(/\/+$/, '');
-    const vsixDownloadUrl = `${cleanRegistry}/api/${extension.namespace}/${extension.name}/${currentVersion}/file/${extension.namespace}.${extension.name}-${currentVersion}.vsix`;
+    const vsixDownloadUrl =
+        extension.downloadUrl ||
+        `${cleanRegistry}/api/${extension.namespace}/${extension.name}/${currentVersion}/file/${extension.namespace}.${extension.name}-${currentVersion}.vsix`;
 
-    const categories = manifest?.categories ?? [];
+    const categories =
+        extension.categories && extension.categories.length > 0
+            ? extension.categories
+            : (manifest?.categories ?? []);
+
+    const repositoryUrl =
+        extension.repositoryUrl ||
+        (typeof manifest?.repository === 'string'
+            ? manifest.repository
+            : manifest?.repository?.url);
+
+    const bugsUrl =
+        extension.bugsUrl ||
+        (typeof manifest?.bugs === 'string' ? manifest.bugs : manifest?.bugs?.url);
+
+    const homepageUrl = extension.homepageUrl || manifest?.homepage;
+    const license = extension.license || manifest?.license;
+    const publisherName =
+        extension.publisherDisplayName || extension.publisherName || extension.namespace || '';
 
     const resourceLink = (href: string, label: string, icon: string) => (
         <div class="resource">
@@ -47,7 +68,9 @@ export function AdditionalDetails({ state, onOpenExternal, onCopyId }: Additiona
                     <div class="additional-details-title">Categories</div>
                     <div class="categories">
                         {categories.map((category: string) => (
-                            <span class="category">{category}</span>
+                            <span class="category" key={category}>
+                                {category}
+                            </span>
                         ))}
                     </div>
                 </div>
@@ -56,12 +79,9 @@ export function AdditionalDetails({ state, onOpenExternal, onCopyId }: Additiona
             <div class="resources-container additional-details-element">
                 <div class="additional-details-title">Resources</div>
                 <div class="resources">
-                    {extension.repositoryUrl
-                        ? resourceLink(extension.repositoryUrl, 'Repository', 'codicon-repo')
-                        : null}
-                    {manifest?.bugs?.url
-                        ? resourceLink(manifest.bugs.url, 'Issues', 'codicon-issues')
-                        : null}
+                    {repositoryUrl ? resourceLink(repositoryUrl, 'Repository', 'codicon-repo') : null}
+                    {bugsUrl ? resourceLink(bugsUrl, 'Issues', 'codicon-issues') : null}
+                    {homepageUrl ? resourceLink(homepageUrl, 'Homepage', 'codicon-home') : null}
                     {resourceLink(vsixDownloadUrl, 'Download VSIX', 'codicon-link-external')}
                 </div>
             </div>
@@ -89,22 +109,49 @@ export function AdditionalDetails({ state, onOpenExternal, onCopyId }: Additiona
                     </div>
                     <div class="more-info-entry">
                         <div class="more-info-entry-name">Publisher</div>
-                        <div>{extension.namespace || ''}</div>
+                        <div>
+                            <span>{publisherName}</span>
+                            {extension.verified ? (
+                                <span
+                                    class="codicon codicon-verified"
+                                    title="Verified Publisher"
+                                    style={{ marginLeft: '4px', verticalAlign: 'middle' }}
+                                />
+                            ) : null}
+                        </div>
                     </div>
                     <div class="more-info-entry">
                         <div class="more-info-entry-name">Version</div>
                         <div>{currentVersion}</div>
                     </div>
+                    {extension.timestamp ? (
+                        <div class="more-info-entry">
+                            <div class="more-info-entry-name">Released</div>
+                            <div>{formatDate(extension.timestamp)}</div>
+                        </div>
+                    ) : null}
+                    {extension.lastUpdated ? (
+                        <div class="more-info-entry">
+                            <div class="more-info-entry-name">Last Updated</div>
+                            <div>{formatDate(extension.lastUpdated)}</div>
+                        </div>
+                    ) : null}
+                    {extension.size ? (
+                        <div class="more-info-entry">
+                            <div class="more-info-entry-name">Size</div>
+                            <div>{formatByteSize(extension.size)}</div>
+                        </div>
+                    ) : null}
                     {extension.downloadCount ? (
                         <div class="more-info-entry">
                             <div class="more-info-entry-name">Downloads</div>
                             <div>{extension.downloadCount.toLocaleString()}</div>
                         </div>
                     ) : null}
-                    {manifest?.license ? (
+                    {license ? (
                         <div class="more-info-entry">
                             <div class="more-info-entry-name">License</div>
-                            <div>{manifest.license}</div>
+                            <div>{license}</div>
                         </div>
                     ) : null}
                 </div>

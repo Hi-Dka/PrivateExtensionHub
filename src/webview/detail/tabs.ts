@@ -24,7 +24,7 @@ export function hasFeatureContributions(manifest?: DetailState['manifest']): boo
     if (contributes.commands && contributes.commands.length > 0) {
         return true;
     }
-    if ((contributes as any).keybindings && (contributes as any).keybindings.length > 0) {
+    if (contributes.keybindings && contributes.keybindings.length > 0) {
         return true;
     }
     return false;
@@ -33,7 +33,7 @@ export function hasFeatureContributions(manifest?: DetailState['manifest']): boo
 export function hasDependencies(manifest?: DetailState['manifest']): boolean {
     return Boolean(
         (manifest?.extensionDependencies && manifest.extensionDependencies.length > 0) ||
-            ((manifest as any)?.extensionPack && (manifest as any).extensionPack.length > 0),
+            (manifest?.extensionPack && manifest.extensionPack.length > 0),
     );
 }
 

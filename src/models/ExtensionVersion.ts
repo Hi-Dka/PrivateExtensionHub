@@ -1,26 +1,53 @@
+import type { ExtensionEngines } from './ExtensionManifest';
+
 export interface ExtensionVersion {
     /**
-     * 版本号字符串 (例如: `1.57.0`)
+     * Version string (e.g. `1.57.0`)
      */
     version: string;
 
     /**
-     * VSIX 安装包直接下载链接
+     * Direct VSIX download URL
      */
     downloadUrl?: string;
 
     /**
-     * 该版本的 README 文档地址
+     * URL of the README file for this version
      */
     readmeUrl?: string;
 
     /**
-     * 该版本的发布时间戳
+     * URL of the CHANGELOG file for this version
+     */
+    changelogUrl?: string;
+
+    /**
+     * Release timestamp string
      */
     timestamp?: string;
 
     /**
-     * 目标运行平台 (例如: `universal`, `linux-x64`)
+     * Target platform (e.g. `universal`, `linux-x64`)
      */
     targetPlatform?: string;
+
+    /**
+     * Engine compatibility requirements
+     */
+    engines?: ExtensionEngines;
+
+    /**
+     * Whether this is the latest version
+     */
+    isLatest?: boolean;
+
+    /**
+     * Whether this is a pre-release version
+     */
+    isPreRelease?: boolean;
+
+    /**
+     * Package size in bytes
+     */
+    size?: number;
 }

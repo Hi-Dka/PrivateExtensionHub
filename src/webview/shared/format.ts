@@ -41,3 +41,41 @@ export function shouldShowRating(item: SidebarItem): boolean {
         (ratingCount ?? 0) > 0
     );
 }
+
+/**
+ * Formats an ISO timestamp or date string into a localized human-readable date.
+ */
+export function formatDate(timestamp?: string): string {
+    if (!timestamp) {
+        return '';
+    }
+    try {
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) {
+            return timestamp;
+        }
+        return date.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+    } catch {
+        return timestamp;
+    }
+}
+
+/**
+ * Formats byte size into human-readable B / KB / MB.
+ */
+export function formatByteSize(bytes?: number): string {
+    if (bytes === undefined || bytes === null || bytes <= 0) {
+        return '';
+    }
+    if (bytes >= 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+    if (bytes >= 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${bytes} B`;
+}
