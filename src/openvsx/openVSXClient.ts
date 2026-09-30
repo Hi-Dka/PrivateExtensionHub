@@ -123,7 +123,7 @@ export class OpenVSXClient {
             const versionDetail = await this.requestJson<OpenVSXExtension>(
                 `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
             );
-            readmeUrl = versionDetail?.files?.readme;
+            readmeUrl = versionDetail.files?.readme;
         }
 
         if (!readmeUrl) {
@@ -153,7 +153,7 @@ export class OpenVSXClient {
             const versionDetail = await this.requestJson<OpenVSXExtension>(
                 `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
             );
-            changelogUrl = versionDetail?.files?.changelog;
+            changelogUrl = versionDetail.files?.changelog;
         }
 
         if (!changelogUrl) {
@@ -184,7 +184,7 @@ export class OpenVSXClient {
             const versionDetail = await this.requestJson<OpenVSXExtension>(
                 `/api/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
             );
-            manifestUrl = versionDetail?.files?.manifest;
+            manifestUrl = versionDetail.files?.manifest;
         }
 
         if (!manifestUrl) {
